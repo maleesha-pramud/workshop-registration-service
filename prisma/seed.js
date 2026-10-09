@@ -9,9 +9,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const LOCATIONS = [
-  { name: 'Downtown Centre', address: '12 Main Street' },
-  { name: 'Riverside Studio', address: '48 River Road' },
-  { name: 'Northside Hall', address: '305 North Avenue' },
+  { name: 'Colombo', address: '12 Madapatha Road' },
+  { name: 'Horana', address: '40 Panadura Road' },
+  { name: 'Gampaha', address: '16 Gampaha Road' },
 ];
 
 async function upsertUser({ name, email, password, role }) {
