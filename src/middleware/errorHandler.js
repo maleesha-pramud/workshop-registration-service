@@ -36,6 +36,14 @@ export function errorHandler(err, req, res, next) {
     }
   }
 
+  // The DB-level capacity CHECK fired: application logic should prevent this,
+  // but if it ever slips through, the database refuses and the user sees "full".
+  if (String(err.message).includes('workshops_active_count_within_capacity_chk')) {
+    return res
+      .status(409)
+      .json({ error: { code: 'WORKSHOP_FULL', message: 'Sorry, this workshop is full' } });
+  }
+
   console.error(err);
   return res.status(500).json({
     error: {

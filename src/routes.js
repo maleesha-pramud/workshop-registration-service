@@ -3,10 +3,16 @@ import authRoutes from './modules/auth/auth.routes.js';
 import userRoutes from './modules/users/users.routes.js';
 import locationRoutes from './modules/locations/locations.routes.js';
 import workshopRoutes from './modules/workshops/workshops.routes.js';
+import {
+  registrationsRouter,
+  workshopRegistrationsRouter,
+} from './modules/registrations/registrations.routes.js';
 
 export const apiRouter = Router();
 
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/users', userRoutes);
 apiRouter.use('/locations', locationRoutes);
+apiRouter.use('/workshops/:workshopId/registrations', workshopRegistrationsRouter);
 apiRouter.use('/workshops', workshopRoutes);
+apiRouter.use('/registrations', registrationsRouter);
