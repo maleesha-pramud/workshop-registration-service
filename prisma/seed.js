@@ -32,13 +32,13 @@ function daysFromNow(days, hour, minute = 0) {
 
 async function seedDemo(locations) {
   const manager = await upsertUser({
-    name: 'Maya Manager',
+    name: 'Madushan Manager',
     email: 'manager@centre.local',
     password: 'Manager@12345',
     role: 'MANAGER',
   });
   await upsertUser({
-    name: 'Sam Staff',
+    name: 'Kasun Staff',
     email: 'staff@centre.local',
     password: 'Staff@12345',
     role: 'STAFF',
