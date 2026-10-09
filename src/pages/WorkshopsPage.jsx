@@ -7,6 +7,7 @@ import { PRESETS, toApiParams, useWorkshopFilters } from '../hooks/useWorkshopFi
 import { formatDate, formatTimeRange } from '../utils/dates'
 import { WORKSHOP_STATUS } from '../utils/labels'
 import { SeatsIndicator } from '../components/workshops/SeatsIndicator'
+import { WorkshopStatusToggle } from '../components/workshops/WorkshopStatusToggle'
 import { WorkshopStatusBadge } from '../components/workshops/WorkshopStatusBadge'
 import { Alert, Button, Card, EmptyState, PageHeader, PageLoader, Pagination } from '../components/ui'
 
@@ -16,7 +17,15 @@ export default function WorkshopsPage() {
   const locations = useLocations()
   const { filters, update, applyPreset, activePreset, search, setSearch } = useWorkshopFilters()
   const apiParams = toApiParams(filters)
-  const { data: workshops, meta, loading, error } = useApi(() => workshopsApi.list(apiParams), [apiParams])
+  const {
+    data: workshops,
+    meta,
+    loading,
+    error,
+    reload,
+  } = useApi(() => workshopsApi.list(apiParams), [apiParams])
+
+  const canToggle = (w) => can('WORKSHOPS_WRITE') && (w.status === 'OPEN' || w.status === 'CLOSED')
 
   const inputClass =
     'rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-slate-300 focus:ring-2 focus:ring-indigo-600'
@@ -129,10 +138,10 @@ export default function WorkshopsPage() {
         ) : (
           <ul className={`divide-y divide-slate-100 ${loading ? 'opacity-60' : ''}`}>
             {workshops?.map((w) => (
-              <li key={w.id}>
+              <li key={w.id} className="flex items-center gap-3 pr-4 hover:bg-slate-50">
                 <Link
                   to={`/workshops/${w.id}`}
-                  className="flex flex-col gap-3 px-4 py-4 hover:bg-slate-50 sm:flex-row sm:items-center"
+                  className="flex min-w-0 flex-1 flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center"
                 >
                   <div className="w-36 shrink-0 text-sm">
                     <p className="font-medium text-slate-900">{formatDate(w.startsAt)}</p>
@@ -149,6 +158,7 @@ export default function WorkshopsPage() {
                   <WorkshopStatusBadge status={w.status} />
                   <SeatsIndicator workshop={w} compact />
                 </Link>
+                {canToggle(w) && <WorkshopStatusToggle workshop={w} onChanged={reload} />}
               </li>
             ))}
           </ul>

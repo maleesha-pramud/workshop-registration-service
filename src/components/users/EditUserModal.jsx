@@ -5,7 +5,7 @@ import { Alert, Button, Field, Modal } from '../ui'
 import { RoleSelect } from './RoleSelect'
 
 export function EditUserModal({ user, isSelf, onClose, onDone }) {
-  const [form, setForm] = useState({ name: user.name, role: user.role, isActive: user.isActive })
+  const [form, setForm] = useState({ name: user.name, role: user.role })
   const { errors, formError, submitting, submit } = useFormSubmit(onDone, 'Account updated')
 
   const onSubmit = (e) => {
@@ -34,7 +34,7 @@ export function EditUserModal({ user, isSelf, onClose, onDone }) {
     >
       <form id="edit-user" className="space-y-4" noValidate onSubmit={onSubmit}>
         {formError && <Alert tone="error">{formError}</Alert>}
-        {isSelf && <Alert tone="info">You can't change your own role or deactivate your own account.</Alert>}
+        {isSelf && <Alert tone="info">You can't change your own role.</Alert>}
         <Field label="Full name" error={errors.name}>
           {(p) => (
             <input
@@ -51,21 +51,6 @@ export function EditUserModal({ user, isSelf, onClose, onDone }) {
           disabled={isSelf}
           error={errors.role}
         />
-        <label className="flex items-start gap-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
-            checked={form.isActive}
-            disabled={isSelf}
-            onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-          />
-          <span>
-            <span className="font-medium text-slate-900">Account active</span>
-            <span className="block text-slate-500">
-              Deactivated staff are signed out immediately. Their history is kept.
-            </span>
-          </span>
-        </label>
       </form>
     </Modal>
   )

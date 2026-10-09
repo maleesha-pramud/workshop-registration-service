@@ -5,7 +5,6 @@ import { useApi } from '../hooks/useApi'
 import { useLocations } from '../hooks/useLocations'
 import { useToast } from '../hooks/useToast'
 import { combineDateTime, toDateInput, toTimeInput } from '../utils/dates'
-import { WORKSHOP_STATUS } from '../utils/labels'
 import { Alert, Button, Card, Field, PageHeader, PageLoader } from '../components/ui'
 
 export default function WorkshopFormPage() {
@@ -35,7 +34,6 @@ function initialValues(w) {
       startTime: '10:00',
       endTime: '12:00',
       capacity: '20',
-      status: 'OPEN',
       description: '',
     }
   }
@@ -48,7 +46,6 @@ function initialValues(w) {
     startTime: toTimeInput(w.startsAt),
     endTime: toTimeInput(w.endsAt),
     capacity: String(w.capacity),
-    status: w.status,
     description: w.description ?? '',
   }
 }
@@ -62,7 +59,6 @@ function toPayload(v) {
     startsAt: combineDateTime(v.date, v.startTime),
     endsAt: combineDateTime(v.date, v.endTime),
     capacity: v.capacity === '' ? undefined : Number(v.capacity),
-    status: v.status,
     description: v.description.trim() || null,
   }
 }
@@ -199,19 +195,6 @@ function WorkshopForm({ workshop }) {
                 />
               )}
             </Field>
-            {isEdit && (
-              <Field label="Status" error={errors.status} hint="Only open workshops take registrations.">
-                {(p) => (
-                  <select {...p} value={values.status} onChange={set('status')}>
-                    {Object.entries(WORKSHOP_STATUS).map(([value, { label }]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </Field>
-            )}
           </div>
 
           <Field label="Description (optional)" error={errors.description}>
