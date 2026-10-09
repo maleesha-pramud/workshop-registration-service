@@ -28,12 +28,15 @@ const EDITABLE_FIELDS = [
 /** Adds the derived fields the UI needs, so it never has to recompute business rules. */
 export function toWorkshopDto({ _count, ...w }) {
   const seatsLeft = Math.max(0, w.capacity - w.activeCount);
+  const hasStarted = new Date(w.startsAt) <= new Date();
   return {
     ...w,
     waitlistCount: _count?.registrations ?? 0,
     seatsLeft,
     isFull: seatsLeft === 0,
-    isBookable: w.status === 'OPEN' && seatsLeft > 0 && new Date(w.startsAt) > new Date(),
+    hasStarted,
+    // Can a seat be booked right now? (A full workshop can still take waitlist entries.)
+    isBookable: w.status === 'OPEN' && !hasStarted && seatsLeft > 0,
   };
 }
 
