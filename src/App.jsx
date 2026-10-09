@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage'
 import ForbiddenPage from './pages/ForbiddenPage'
 import NotFoundPage from './pages/NotFoundPage'
 import UsersPage from './pages/UsersPage'
+import WorkshopsPage from './pages/WorkshopsPage'
 
 export default function App() {
   return (
@@ -21,6 +22,10 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route index element={<HomeRedirect />} />
                 <Route path="forbidden" element={<ForbiddenPage />} />
+
+                <Route element={<ProtectedRoute permission="WORKSHOPS_READ" />}>
+                  <Route path="workshops" element={<WorkshopsPage />} />
+                </Route>
 
                 <Route element={<ProtectedRoute permission="USERS_MANAGE" />}>
                   <Route path="users" element={<UsersPage />} />
