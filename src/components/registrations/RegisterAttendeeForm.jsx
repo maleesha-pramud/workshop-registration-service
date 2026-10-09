@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { registrationsApi } from '../../api/endpoints'
 import { useToast } from '../../hooks/useToast'
 import { Alert, Button, Card, Field } from '../ui'
@@ -17,6 +17,7 @@ export default function RegisterAttendeeForm({ workshop, onRegistered }) {
   const [formError, setFormError] = useState(null)
   const [justFilled, setJustFilled] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const nameInput = useRef(null)
 
   const notOpen = workshop.status !== 'OPEN'
   const started = workshop.hasStarted
@@ -50,6 +51,7 @@ export default function RegisterAttendeeForm({ workshop, onRegistered }) {
       setForm(EMPTY)
       setJustFilled(false)
       onRegistered()
+      nameInput.current?.focus() // ready for the next person in the queue
     } catch (err) {
       if (err.code === 'WORKSHOP_FULL') {
         setJustFilled(true)
@@ -100,7 +102,14 @@ export default function RegisterAttendeeForm({ workshop, onRegistered }) {
 
         <Field label="Attendee name" error={errors.attendeeName}>
           {(p) => (
-            <input {...p} value={form.attendeeName} onChange={set('attendeeName')} autoComplete="off" />
+            <input
+              {...p}
+              ref={nameInput}
+              value={form.attendeeName}
+              onChange={set('attendeeName')}
+              autoComplete="off"
+              placeholder="e.g. Nimali Perera"
+            />
           )}
         </Field>
         <Field label="Attendee email" error={errors.attendeeEmail}>
@@ -108,6 +117,7 @@ export default function RegisterAttendeeForm({ workshop, onRegistered }) {
             <input
               {...p}
               type="email"
+              placeholder="name@example.com"
               value={form.attendeeEmail}
               onChange={set('attendeeEmail')}
               autoComplete="off"

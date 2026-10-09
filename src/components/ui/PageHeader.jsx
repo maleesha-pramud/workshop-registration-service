@@ -1,4 +1,8 @@
+import { usePageTitle } from '../../hooks/usePageTitle'
+
+/** Page heading. Also sets the browser tab title, so people with several tabs can tell them apart. */
 export function PageHeader({ title, subtitle, actions }) {
+  usePageTitle(title)
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>

@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   if (status === 'authenticated') return <Navigate to={homePathFor(user)} replace />
 
@@ -64,14 +65,25 @@ export default function LoginPage() {
             </Field>
             <Field label="Password">
               {(props) => (
-                <input
-                  {...props}
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={form.password}
-                  onChange={set('password')}
-                />
+                <div className="relative">
+                  <input
+                    {...props}
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={form.password}
+                    onChange={set('password')}
+                    className={`${props.className} pr-16`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-pressed={showPassword}
+                    className="absolute inset-y-0 right-0 px-3 text-xs font-medium text-slate-500 hover:text-slate-800"
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               )}
             </Field>
 

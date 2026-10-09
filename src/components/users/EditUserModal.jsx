@@ -40,6 +40,7 @@ export function EditUserModal({ user, isSelf, onClose, onDone }) {
             <input
               {...p}
               value={form.name}
+              autoFocus
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             />
           )}

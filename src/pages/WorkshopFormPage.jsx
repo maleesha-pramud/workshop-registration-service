@@ -129,7 +129,7 @@ function WorkshopForm({ workshop }) {
           {formError && <Alert tone="error">{formError}</Alert>}
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Code" error={errors.code} hint="e.g. POT-101">
+            <Field label="Code" error={errors.code} hint="A short code staff can recognise, e.g. POT-101">
               {(p) => (
                 <input
                   {...p}
@@ -140,13 +140,27 @@ function WorkshopForm({ workshop }) {
               )}
             </Field>
             <Field label="Title" error={errors.title} className="sm:col-span-2">
-              {(p) => <input {...p} value={values.title} onChange={set('title')} />}
+              {(p) => (
+                <input
+                  {...p}
+                  value={values.title}
+                  onChange={set('title')}
+                  placeholder="e.g. Pottery for beginners"
+                />
+              )}
             </Field>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Instructor" error={errors.instructor}>
-              {(p) => <input {...p} value={values.instructor} onChange={set('instructor')} />}
+              {(p) => (
+                <input
+                  {...p}
+                  value={values.instructor}
+                  onChange={set('instructor')}
+                  placeholder="e.g. Nimali Fernando"
+                />
+              )}
             </Field>
             <Field label="Location" error={errors.locationId}>
               {(p) => (
@@ -197,7 +211,11 @@ function WorkshopForm({ workshop }) {
             </Field>
           </div>
 
-          <Field label="Description (optional)" error={errors.description}>
+          <Field
+            label="Description (optional)"
+            error={errors.description}
+            hint="Anything the front desk should tell callers: what to bring, who it suits, the price."
+          >
             {(p) => <textarea {...p} rows={4} value={values.description} onChange={set('description')} />}
           </Field>
 

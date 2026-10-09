@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { registrationsApi } from '../../api/endpoints'
 import { useToast } from '../../hooks/useToast'
-import { Alert, Button, Field, Modal } from '../ui'
+import { Alert, Button, ChipGroup, Field, Modal } from '../ui'
+
+const COMMON_REASONS = [
+  'Attendee called to cancel',
+  'Cannot attend',
+  'Booked by mistake',
+  'Duplicate booking',
+].map((label) => ({ id: label, label }))
 
 export default function CancelRegistrationDialog({ registration, onClose, onCancelled }) {
   const { notify } = useToast()
@@ -56,6 +63,12 @@ export default function CancelRegistrationDialog({ registration, onClose, onCanc
             : 'will be removed from the waitlist.'}
         </p>
         <p className="text-slate-500">The registration stays in the history, with your name and the time.</p>
+        <ChipGroup
+          label="Common reasons"
+          options={COMMON_REASONS}
+          value={reason}
+          onChange={(o) => setReason(o.id)}
+        />
         <Field label="Reason (optional)">
           {(p) => (
             <input
@@ -63,7 +76,7 @@ export default function CancelRegistrationDialog({ registration, onClose, onCanc
               value={reason}
               maxLength={255}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Called to cancel, feeling unwell"
+              placeholder="Pick one above, or type your own"
             />
           )}
         </Field>

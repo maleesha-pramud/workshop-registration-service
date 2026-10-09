@@ -66,3 +66,24 @@ export function addDays(date, days) {
   d.setDate(d.getDate() + days)
   return d
 }
+
+const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+
+/** "Today", "Tomorrow" or "Yesterday" when it applies, otherwise e.g. "Fri, 9 Oct 2026". */
+export function formatDay(iso) {
+  const d = new Date(iso)
+  const now = new Date()
+  if (dayKey(d) === dayKey(now)) return 'Today'
+  if (dayKey(d) === dayKey(addDays(now, 1))) return 'Tomorrow'
+  if (dayKey(d) === dayKey(addDays(now, -1))) return 'Yesterday'
+  return formatDate(iso)
+}
+
+/** "just now", "5 min ago", "3 h ago", otherwise a short date and time. */
+export function formatRelative(iso) {
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes} min ago`
+  if (minutes < 60 * 12) return `${Math.round(minutes / 60)} h ago`
+  return formatDateTime(iso)
+}

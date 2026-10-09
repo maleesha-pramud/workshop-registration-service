@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usersApi } from '../../api/endpoints'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
+import { generatePassword } from '../../utils/password'
 import { Alert, Button, Field, Modal } from '../ui'
 import { RoleSelect } from './RoleSelect'
 
@@ -35,10 +36,26 @@ export function CreateUserModal({ onClose, onDone }) {
       <form id="create-user" className="space-y-4" noValidate onSubmit={onSubmit}>
         {formError && <Alert tone="error">{formError}</Alert>}
         <Field label="Full name" error={errors.name}>
-          {(p) => <input {...p} value={form.name} onChange={set('name')} autoFocus />}
+          {(p) => (
+            <input
+              {...p}
+              value={form.name}
+              onChange={set('name')}
+              autoFocus
+              placeholder="e.g. Nimali Perera"
+            />
+          )}
         </Field>
         <Field label="Email" error={errors.email}>
-          {(p) => <input {...p} type="email" value={form.email} onChange={set('email')} />}
+          {(p) => (
+            <input
+              {...p}
+              type="email"
+              value={form.email}
+              onChange={set('email')}
+              placeholder="name@centre.local"
+            />
+          )}
         </Field>
         <RoleSelect
           value={form.role}
@@ -60,6 +77,13 @@ export function CreateUserModal({ onClose, onDone }) {
             />
           )}
         </Field>
+        <button
+          type="button"
+          className="text-sm font-medium text-indigo-600 hover:underline"
+          onClick={() => setForm((f) => ({ ...f, password: generatePassword() }))}
+        >
+          Suggest a password
+        </button>
       </form>
     </Modal>
   )

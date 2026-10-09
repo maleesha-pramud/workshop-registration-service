@@ -1,16 +1,18 @@
 import { Button } from './Button'
 
-/** Expects the `meta` object the API returns: { page, totalPages, total }. */
+/** Expects the `meta` object the API returns: { page, pageSize, totalPages, total }. */
 export function Pagination({ meta, onPage }) {
   if (!meta || meta.totalPages <= 1) return null
+  const first = (meta.page - 1) * meta.pageSize + 1
+  const last = Math.min(meta.page * meta.pageSize, meta.total)
   return (
     <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-600">
       <span>
-        Page {meta.page} of {meta.totalPages} · {meta.total} total
+        Showing {first}–{last} of {meta.total}
       </span>
       <div className="flex gap-2">
         <Button size="sm" variant="secondary" disabled={meta.page <= 1} onClick={() => onPage(meta.page - 1)}>
-          Previous
+          ← Previous
         </Button>
         <Button
           size="sm"
@@ -18,7 +20,7 @@ export function Pagination({ meta, onPage }) {
           disabled={meta.page >= meta.totalPages}
           onClick={() => onPage(meta.page + 1)}
         >
-          Next
+          Next →
         </Button>
       </div>
     </div>

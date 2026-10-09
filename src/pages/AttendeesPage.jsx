@@ -4,7 +4,16 @@ import { registrationsApi } from '../api/endpoints'
 import { useApi } from '../hooks/useApi'
 import { formatDateTime } from '../utils/dates'
 import { REGISTRATION_STATUS } from '../utils/labels'
-import { Alert, Badge, Card, EmptyState, PageHeader, PageLoader, Pagination } from '../components/ui'
+import {
+  Alert,
+  Badge,
+  Card,
+  EmptyState,
+  PageHeader,
+  PageLoader,
+  Pagination,
+  SearchInput,
+} from '../components/ui'
 
 /**
  * "Hi, I booked something but can't remember what": look a caller up by name
@@ -34,14 +43,13 @@ export default function AttendeesPage() {
 
       <Card>
         <div className="border-b border-slate-200 p-4">
-          <input
-            type="search"
+          <SearchInput
             autoFocus
+            className="max-w-md"
             placeholder="Type a name or email"
-            aria-label="Search attendees"
-            className="w-full max-w-md rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-slate-300 focus:ring-2 focus:ring-indigo-600"
+            label="Search attendees"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
           />
         </div>
 
@@ -51,11 +59,15 @@ export default function AttendeesPage() {
           </Alert>
         )}
         {!enabled ? (
-          <EmptyState title="Start typing to search">At least 2 characters.</EmptyState>
+          <EmptyState title="Start typing to search">
+            Enter at least 2 letters of a name or an email address.
+          </EmptyState>
         ) : loading && !data?.length ? (
           <PageLoader />
         ) : data?.length === 0 ? (
-          <EmptyState title="No bookings found" />
+          <EmptyState title={`No bookings found for "${query.q}"`}>
+            Check the spelling, or try just the first few letters of the name or email.
+          </EmptyState>
         ) : (
           <ul className="divide-y divide-slate-100">
             {data.map((r) => {
