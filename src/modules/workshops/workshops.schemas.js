@@ -45,7 +45,12 @@ export const updateWorkshopBody = z
 const csvOf = (values) =>
   z
     .string()
-    .transform((s) => s.split(',').map((v) => v.trim().toUpperCase()).filter(Boolean))
+    .transform((s) =>
+      s
+        .split(',')
+        .map((v) => v.trim().toUpperCase())
+        .filter(Boolean),
+    )
     .pipe(z.array(z.enum(values)).min(1));
 
 export const listWorkshopsQuery = z
@@ -57,7 +62,10 @@ export const listWorkshopsQuery = z
     status: csvOf(WORKSHOP_STATUSES).optional(),
     locationId: z.coerce.number().int().positive().optional(),
     // "Can I book someone onto this right now?": open, upcoming and not full.
-    hasSeats: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+    hasSeats: z
+      .enum(['true', 'false'])
+      .transform((v) => v === 'true')
+      .optional(),
     ...pagination,
   })
   .refine((q) => !q.from || !q.to || q.from <= q.to, {

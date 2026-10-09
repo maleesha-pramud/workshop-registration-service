@@ -31,7 +31,7 @@ async function call(method, path, body) {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
     },
-    body: body ? JSON.stringify(body) : undefined,
+    ...(body && { body: JSON.stringify(body) }),
   });
   const json = res.status === 204 ? null : await res.json();
   return { status: res.status, json };
@@ -112,9 +112,7 @@ async function main() {
   check('workshop.activeCount after cancel', after.activeCount, CAPACITY - 1);
 
   console.log(`\n4) ${REQUESTS} simultaneous registrations for the 1 freed seat`);
-  const second = await Promise.all(
-    Array.from({ length: REQUESTS }, (_, i) => register(w.id, i, 'q')),
-  );
+  const second = await Promise.all(Array.from({ length: REQUESTS }, (_, i) => register(w.id, i, 'q')));
   console.log(`  ${JSON.stringify(tally(second))}`);
   check('successful registrations', second.filter((r) => r.status === 201).length, 1);
   after = (await call('GET', `/workshops/${w.id}`)).json.data;

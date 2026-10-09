@@ -139,8 +139,7 @@ export async function cancel(registrationId, { reason }, actor) {
       changes: { status: { from: registration.status, to: 'CANCELLED' }, reason: reason || null },
     });
 
-    const promoted =
-      registration.status === 'ACTIVE' ? await fillFromWaitlist(tx, workshop.id, actor) : [];
+    const promoted = registration.status === 'ACTIVE' ? await fillFromWaitlist(tx, workshop.id, actor) : [];
 
     return { registration: cancelled, promoted };
   });
@@ -162,9 +161,7 @@ export async function listForWorkshop(workshopId, { status }) {
 
   // Rows are ordered by registeredAt, which is exactly the waitlist order.
   let position = 0;
-  return registrations.map((r) =>
-    r.status === 'WAITLISTED' ? { ...r, waitlistPosition: ++position } : r,
-  );
+  return registrations.map((r) => (r.status === 'WAITLISTED' ? { ...r, waitlistPosition: ++position } : r));
 }
 
 /** Search across all workshops, e.g. everything one attendee has booked or cancelled. */

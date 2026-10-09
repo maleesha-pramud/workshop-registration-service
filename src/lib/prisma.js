@@ -29,8 +29,7 @@ export async function withTransaction(fn, { retries = 3 } = {}) {
         timeout: 15_000,
       });
     } catch (err) {
-      const retryable =
-        err instanceof Prisma.PrismaClientKnownRequestError && RETRYABLE_CODES.has(err.code);
+      const retryable = err instanceof Prisma.PrismaClientKnownRequestError && RETRYABLE_CODES.has(err.code);
       if (!retryable) throw err;
       if (attempt > retries) throw new ServiceBusyError();
       await new Promise((r) => setTimeout(r, 20 * attempt + Math.random() * 50));
