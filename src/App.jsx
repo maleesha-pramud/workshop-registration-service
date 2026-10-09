@@ -9,6 +9,7 @@ import ForbiddenPage from './pages/ForbiddenPage'
 import NotFoundPage from './pages/NotFoundPage'
 import UsersPage from './pages/UsersPage'
 import WorkshopsPage from './pages/WorkshopsPage'
+import WorkshopDetailPage from './pages/WorkshopDetailPage'
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
 
                 <Route element={<ProtectedRoute permission="WORKSHOPS_READ" />}>
                   <Route path="workshops" element={<WorkshopsPage />} />
+                  <Route path="workshops/:id" element={<WorkshopDetailPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute permission="USERS_MANAGE" />}>
