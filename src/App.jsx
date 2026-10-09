@@ -10,6 +10,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import UsersPage from './pages/UsersPage'
 import WorkshopsPage from './pages/WorkshopsPage'
 import WorkshopDetailPage from './pages/WorkshopDetailPage'
+import WorkshopFormPage from './pages/WorkshopFormPage'
 
 export default function App() {
   return (
@@ -23,6 +24,11 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route index element={<HomeRedirect />} />
                 <Route path="forbidden" element={<ForbiddenPage />} />
+
+                <Route element={<ProtectedRoute permission="WORKSHOPS_WRITE" />}>
+                  <Route path="workshops/new" element={<WorkshopFormPage />} />
+                  <Route path="workshops/:id/edit" element={<WorkshopFormPage />} />
+                </Route>
 
                 <Route element={<ProtectedRoute permission="WORKSHOPS_READ" />}>
                   <Route path="workshops" element={<WorkshopsPage />} />
