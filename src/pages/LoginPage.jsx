@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { homePathFor } from '../routes/navigation'
 import { Alert, Button, Card, Field } from '../components/ui'
 
@@ -51,12 +51,27 @@ export default function LoginPage() {
 
             <Field label="Email">
               {(props) => (
-                <input {...props} type="email" autoComplete="username" required autoFocus value={form.email} onChange={set('email')} />
+                <input
+                  {...props}
+                  type="email"
+                  autoComplete="username"
+                  required
+                  autoFocus
+                  value={form.email}
+                  onChange={set('email')}
+                />
               )}
             </Field>
             <Field label="Password">
               {(props) => (
-                <input {...props} type="password" autoComplete="current-password" required value={form.password} onChange={set('password')} />
+                <input
+                  {...props}
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={form.password}
+                  onChange={set('password')}
+                />
               )}
             </Field>
 

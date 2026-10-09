@@ -1,109 +1,41 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { workshopsApi } from '../api/endpoints'
 import { useApi } from '../hooks/useApi'
 import { useLocations } from '../hooks/useLocations'
-import { useAuth } from '../context/AuthContext'
-import { addDays, endOfDay, endOfWeek, formatDate, formatTimeRange, startOfDay, toDateInput } from '../utils/dates'
+import { useAuth } from '../hooks/useAuth'
+import { PRESETS, toApiParams, useWorkshopFilters } from '../hooks/useWorkshopFilters'
+import { formatDate, formatTimeRange } from '../utils/dates'
 import { WORKSHOP_STATUS } from '../utils/labels'
-import { SeatsIndicator, WorkshopStatusBadge } from '../components/workshop'
+import { SeatsIndicator } from '../components/workshops/SeatsIndicator'
+import { WorkshopStatusBadge } from '../components/workshops/WorkshopStatusBadge'
 import { Alert, Button, Card, EmptyState, PageHeader, PageLoader, Pagination } from '../components/ui'
-
-const today = () => toDateInput(new Date())
-
-// One-click answers to the questions the front desk asks most.
-const PRESETS = [
-  { id: 'week-seats', label: 'This week · has seats', params: () => ({ from: today(), to: toDateInput(endOfWeek()), hasSeats: '1' }) },
-  { id: 'today', label: 'Today', params: () => ({ from: today(), to: today() }) },
-  { id: 'next7', label: 'Next 7 days', params: () => ({ from: today(), to: toDateInput(addDays(new Date(), 6)) }) },
-  { id: 'upcoming', label: 'All upcoming', params: () => ({ from: today() }) },
-  { id: 'all', label: 'Include past', params: () => ({ from: '' }) },
-]
-
-const FILTER_KEYS = ['q', 'from', 'to', 'status', 'locationId', 'hasSeats']
-
-/**
- * Filters live in the URL, so the back button works, a refresh keeps the
- * view, and a filtered list can be bookmarked or shared with a colleague.
- */
-function useWorkshopFilters() {
-  const [searchParams, setSearchParams] = useSearchParams()
-
-  const filters = useMemo(() => {
-    const f = Object.fromEntries(FILTER_KEYS.map((k) => [k, searchParams.get(k) ?? '']))
-    // First visit: hide workshops that have already happened.
-    if (!searchParams.has('from')) f.from = today()
-    f.page = Number(searchParams.get('page')) || 1
-    return f
-  }, [searchParams])
-
-  const update = (changes, { resetPage = true } = {}) => {
-    const next = { ...filters, ...(resetPage && { page: 1 }), ...changes }
-    const params = new URLSearchParams()
-    for (const [k, v] of Object.entries(next)) {
-      if (k === 'from' || (v !== '' && v != null && !(k === 'page' && v === 1))) params.set(k, v)
-    }
-    setSearchParams(params, { replace: true })
-  }
-
-  const replaceAll = (params) => setSearchParams(new URLSearchParams(params), { replace: true })
-
-  return { filters, update, replaceAll }
-}
-
-function toApiParams(f) {
-  return {
-    q: f.q || undefined,
-    from: f.from ? startOfDay(new Date(`${f.from}T00:00`)).toISOString() : undefined,
-    to: f.to ? endOfDay(new Date(`${f.to}T00:00`)).toISOString() : undefined,
-    status: f.status || undefined,
-    locationId: f.locationId || undefined,
-    hasSeats: f.hasSeats ? 'true' : undefined,
-    page: f.page,
-    pageSize: 20,
-  }
-}
 
 export default function WorkshopsPage() {
   const { can } = useAuth()
   const navigate = useNavigate()
   const locations = useLocations()
-  const { filters, update, replaceAll } = useWorkshopFilters()
+  const { filters, update, applyPreset, activePreset, search, setSearch } = useWorkshopFilters()
   const apiParams = toApiParams(filters)
   const { data: workshops, meta, loading, error } = useApi(() => workshopsApi.list(apiParams), [apiParams])
 
-  // Debounce typing in the search box.
-  const [search, setSearch] = useState(filters.q)
-  useEffect(() => {
-    if (search === filters.q) return
-    const t = setTimeout(() => update({ q: search }), 300)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search])
-
-  const activePreset = PRESETS.find((p) => {
-    const pp = p.params()
-    return FILTER_KEYS.every((k) => (pp[k] ?? '') === filters[k])
-  })?.id
-
-  const inputClass = 'rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-slate-300 focus:ring-2 focus:ring-indigo-600'
+  const inputClass =
+    'rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-slate-300 focus:ring-2 focus:ring-indigo-600'
 
   return (
     <>
       <PageHeader
         title="Workshops"
         subtitle="Find a workshop, check seats and register attendees."
-        actions={can('WORKSHOPS_WRITE') && <Button onClick={() => navigate('/workshops/new')}>New workshop</Button>}
+        actions={
+          can('WORKSHOPS_WRITE') && <Button onClick={() => navigate('/workshops/new')}>New workshop</Button>
+        }
       />
 
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Quick filters">
         {PRESETS.map((p) => (
           <button
             key={p.id}
-            onClick={() => {
-              setSearch('')
-              replaceAll(p.params())
-            }}
+            onClick={() => applyPreset(p)}
             className={`rounded-full px-3 py-1.5 text-sm font-medium ring-1 transition-colors ${
               activePreset === p.id
                 ? 'bg-indigo-600 text-white ring-indigo-600'
@@ -127,22 +59,47 @@ export default function WorkshopsPage() {
           />
           <label className="flex items-center gap-2 text-sm text-slate-600">
             <span className="shrink-0">From</span>
-            <input type="date" className={`${inputClass} w-full`} value={filters.from} onChange={(e) => update({ from: e.target.value })} />
+            <input
+              type="date"
+              className={`${inputClass} w-full`}
+              value={filters.from}
+              onChange={(e) => update({ from: e.target.value })}
+            />
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
             <span className="shrink-0">To</span>
-            <input type="date" className={`${inputClass} w-full`} value={filters.to} min={filters.from || undefined} onChange={(e) => update({ to: e.target.value })} />
+            <input
+              type="date"
+              className={`${inputClass} w-full`}
+              value={filters.to}
+              min={filters.from || undefined}
+              onChange={(e) => update({ to: e.target.value })}
+            />
           </label>
-          <select aria-label="Status" className={inputClass} value={filters.status} onChange={(e) => update({ status: e.target.value })}>
+          <select
+            aria-label="Status"
+            className={inputClass}
+            value={filters.status}
+            onChange={(e) => update({ status: e.target.value })}
+          >
             <option value="">Any status</option>
             {Object.entries(WORKSHOP_STATUS).map(([value, { label }]) => (
-              <option key={value} value={value}>{label}</option>
+              <option key={value} value={value}>
+                {label}
+              </option>
             ))}
           </select>
-          <select aria-label="Location" className={inputClass} value={filters.locationId} onChange={(e) => update({ locationId: e.target.value })}>
+          <select
+            aria-label="Location"
+            className={inputClass}
+            value={filters.locationId}
+            onChange={(e) => update({ locationId: e.target.value })}
+          >
             <option value="">All locations</option>
             {locations.map((l) => (
-              <option key={l.id} value={l.id}>{l.name}</option>
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
             ))}
           </select>
         </div>
@@ -158,16 +115,25 @@ export default function WorkshopsPage() {
       </Card>
 
       <Card>
-        {error && <Alert tone="error" className="m-4">{error.message}</Alert>}
+        {error && (
+          <Alert tone="error" className="m-4">
+            {error.message}
+          </Alert>
+        )}
         {loading && !workshops ? (
           <PageLoader />
         ) : workshops?.length === 0 ? (
-          <EmptyState title="No workshops match these filters">Try a wider date range or clear some filters.</EmptyState>
+          <EmptyState title="No workshops match these filters">
+            Try a wider date range or clear some filters.
+          </EmptyState>
         ) : (
           <ul className={`divide-y divide-slate-100 ${loading ? 'opacity-60' : ''}`}>
             {workshops?.map((w) => (
               <li key={w.id}>
-                <Link to={`/workshops/${w.id}`} className="flex flex-col gap-3 px-4 py-4 hover:bg-slate-50 sm:flex-row sm:items-center">
+                <Link
+                  to={`/workshops/${w.id}`}
+                  className="flex flex-col gap-3 px-4 py-4 hover:bg-slate-50 sm:flex-row sm:items-center"
+                >
                   <div className="w-36 shrink-0 text-sm">
                     <p className="font-medium text-slate-900">{formatDate(w.startsAt)}</p>
                     <p className="text-slate-500">{formatTimeRange(w.startsAt, w.endsAt)}</p>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { registrationsApi } from '../api/endpoints'
-import { useToast } from '../context/ToastContext'
-import { Alert, Button, Field, Modal } from './ui'
+import { registrationsApi } from '../../api/endpoints'
+import { useToast } from '../../hooks/useToast'
+import { Alert, Button, Field, Modal } from '../ui'
 
 export default function CancelRegistrationDialog({ registration, onClose, onCancelled }) {
   const { notify } = useToast()
@@ -57,7 +57,15 @@ export default function CancelRegistrationDialog({ registration, onClose, onCanc
         </p>
         <p className="text-slate-500">The registration stays in the history, with your name and the time.</p>
         <Field label="Reason (optional)">
-          {(p) => <input {...p} value={reason} maxLength={255} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Called to cancel, feeling unwell" />}
+          {(p) => (
+            <input
+              {...p}
+              value={reason}
+              maxLength={255}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Called to cancel, feeling unwell"
+            />
+          )}
         </Field>
       </div>
     </Modal>

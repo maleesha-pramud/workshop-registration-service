@@ -2,17 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
  * Loads data from the API and tracks loading/error state.
- * `deps` are compared by value; when they change the request is re-run and any
- * response from an older request is ignored, so fast filter changes can't show
- * stale results.
  *
  *   const { data, meta, loading, error, reload } = useApi(() => workshopsApi.list(params), [params])
+ *
+ * - `deps` are compared by value; when they change (or `reload()` is called) the request re-runs.
+ * - A response from an older request is ignored, so fast filter changes can't show stale results.
+ * - While reloading, the previous `data` stays available (`loading` is true), so lists don't flash empty.
  */
 export function useApi(fetcher, deps = []) {
-  const [state, setState] = useState({ data: null, meta: null, loading: true, error: null })
-  const [reloadToken, setReloadToken] = useState(0)
+  const [reloadCount, setReloadCount] = useState(0)
+  const [result, setResult] = useState({ key: null, data: null, meta: null, error: null })
   const fetcherRef = useRef(fetcher)
-  const key = JSON.stringify(deps)
+  const requestKey = `${JSON.stringify(deps)}#${reloadCount}`
 
   useEffect(() => {
     fetcherRef.current = fetcher
@@ -20,21 +21,29 @@ export function useApi(fetcher, deps = []) {
 
   useEffect(() => {
     let stale = false
-    setState((s) => ({ ...s, loading: true, error: null }))
     fetcherRef
       .current()
       .then((res) => {
-        if (!stale) setState({ data: res?.data ?? res, meta: res?.meta ?? null, loading: false, error: null })
+        if (!stale)
+          setResult({ key: requestKey, data: res?.data ?? res, meta: res?.meta ?? null, error: null })
       })
       .catch((error) => {
-        if (!stale) setState((s) => ({ ...s, loading: false, error }))
+        if (!stale) setResult((prev) => ({ ...prev, key: requestKey, error }))
       })
     return () => {
       stale = true
     }
-  }, [key, reloadToken])
+  }, [requestKey])
 
-  const reload = useCallback(() => setReloadToken((t) => t + 1), [])
+  const reload = useCallback(() => setReloadCount((n) => n + 1), [])
 
-  return { ...state, reload }
+  // Loading until a result arrives for the *current* request.
+  const loading = result.key !== requestKey
+  return {
+    data: result.data,
+    meta: result.meta,
+    loading,
+    error: loading ? null : result.error,
+    reload,
+  }
 }

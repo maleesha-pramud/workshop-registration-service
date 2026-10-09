@@ -21,7 +21,10 @@ export default function AttendeesPage() {
 
   const enabled = query.q.length >= 2
   const { data, meta, loading, error } = useApi(
-    () => (enabled ? registrationsApi.search({ q: query.q, page: query.page, pageSize: 20 }) : Promise.resolve({ data: [] })),
+    () =>
+      enabled
+        ? registrationsApi.search({ q: query.q, page: query.page, pageSize: 20 })
+        : Promise.resolve({ data: [] }),
     [query],
   )
 
@@ -42,7 +45,11 @@ export default function AttendeesPage() {
           />
         </div>
 
-        {error && <Alert tone="error" className="m-4">{error.message}</Alert>}
+        {error && (
+          <Alert tone="error" className="m-4">
+            {error.message}
+          </Alert>
+        )}
         {!enabled ? (
           <EmptyState title="Start typing to search">At least 2 characters.</EmptyState>
         ) : loading && !data?.length ? (
@@ -55,14 +62,18 @@ export default function AttendeesPage() {
               const status = REGISTRATION_STATUS[r.status]
               return (
                 <li key={r.id}>
-                  <Link to={`/workshops/${r.workshop.id}`} className="flex flex-col gap-2 px-4 py-3 hover:bg-slate-50 sm:flex-row sm:items-center">
+                  <Link
+                    to={`/workshops/${r.workshop.id}`}
+                    className="flex flex-col gap-2 px-4 py-3 hover:bg-slate-50 sm:flex-row sm:items-center"
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-slate-900">{r.attendeeName}</p>
                       <p className="text-sm text-slate-500">{r.attendeeEmail}</p>
                     </div>
                     <div className="min-w-0 flex-1 text-sm">
                       <p className="font-medium text-slate-800">
-                        {r.workshop.title} <span className="text-xs font-normal text-slate-500">{r.workshop.code}</span>
+                        {r.workshop.title}{' '}
+                        <span className="text-xs font-normal text-slate-500">{r.workshop.code}</span>
                       </p>
                       <p className="text-slate-500">{formatDateTime(r.workshop.startsAt)}</p>
                     </div>
