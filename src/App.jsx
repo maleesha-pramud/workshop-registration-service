@@ -7,6 +7,7 @@ import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import ForbiddenPage from './pages/ForbiddenPage'
 import NotFoundPage from './pages/NotFoundPage'
+import UsersPage from './pages/UsersPage'
 
 export default function App() {
   return (
@@ -20,6 +21,10 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route index element={<HomeRedirect />} />
                 <Route path="forbidden" element={<ForbiddenPage />} />
+
+                <Route element={<ProtectedRoute permission="USERS_MANAGE" />}>
+                  <Route path="users" element={<UsersPage />} />
+                </Route>
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>
