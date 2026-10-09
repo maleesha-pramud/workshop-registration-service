@@ -17,11 +17,11 @@ npm run build
 
 ## What each role sees
 
-| Role | Lands on | Can use |
-|---|---|---|
-| Admin | Staff accounts | create staff, change roles, deactivate, reset passwords, account activity log |
-| Manager | Workshops | create/edit workshops, register/cancel attendees, history, activity log |
-| Front desk (Staff) | Workshops | find workshops, register/cancel attendees, history, attendee lookup |
+| Role               | Lands on       | Can use                                                                       |
+| ------------------ | -------------- | ----------------------------------------------------------------------------- |
+| Admin              | Staff accounts | create staff, change roles, deactivate, reset passwords, account activity log |
+| Manager            | Workshops      | create/edit workshops, register/cancel attendees, history, activity log       |
+| Front desk (Staff) | Workshops      | find workshops, register/cancel attendees, history, attendee lookup           |
 
 The navigation and buttons come from the permission list the API returns for the signed-in user
 (`GET /auth/me`), so the UI and backend share one permission matrix. Hiding things is only a
@@ -31,16 +31,42 @@ convenience: the backend refuses anything not allowed.
 
 ```
 src/
-  api/          axios client (token, 401 handling, uniform ApiError), tokenStore, endpoints.js
-  context/      AuthContext (session + can()), ToastContext
-  routes/       ProtectedRoute (login + permission guard), navigation config, home redirect
-  hooks/        useApi (loading/error, ignores stale responses), useLocations
-  components/   ui.jsx primitives, Layout, workshop widgets, RegisterAttendeeForm, CancelRegistrationDialog
-  pages/        Login, Workshops, WorkshopDetail, WorkshopForm, Users, Attendees, Activity, Forbidden, NotFound
-  utils/        dates (UTC in, local out), labels
+  App.jsx          providers + route table (read this first: it shows every page and who may open it)
+  api/             client.js (axios, token header, 401 handling, uniform ApiError)
+                   endpoints.js (one function per API endpoint), tokenStore.js
+  context/         AuthProvider, ToastProvider (+ the small *-context.js files they share)
+  hooks/           useAuth, useToast, useApi (loading/error/stale-response safe), useFormSubmit,
+                   useWorkshopFilters (URL-synced filters), useLocations
+  routes/          ProtectedRoute (login + permission guard), navigation.js (menu + home page per role)
+  pages/           one file per screen: Login, Workshops, WorkshopDetail, WorkshopForm, Users,
+                   Attendees, Activity, Forbidden, NotFound
+  components/
+    ui/            generic building blocks: Button, Field, Card, Modal, Alert, Badge, ...
+    users/         UsersTable and the create / edit / reset-password dialogs
+    workshops/     SeatsIndicator, WorkshopStatusBadge
+    registrations/ RegisterAttendeeForm, CancelRegistrationDialog
+    Layout.jsx     header, role-aware navigation
+  utils/           dates (UTC in, local out), labels (enum -> friendly text), cx
 ```
 
-Components never build URLs: every endpoint is one function in `api/endpoints.js`.
+Conventions:
+
+- Components never build URLs or call axios: every endpoint is a function in `api/endpoints.js`.
+- Pages fetch with `useApi`. Simple forms (the account dialogs) use `useFormSubmit` for field errors,
+  alerts, toasts and loading state; the workshop and registration forms have extra rules (e.g. offering the
+  waitlist on a 409) so they handle their own errors.
+- Each file in `components/ui` is one small component; import them from `components/ui`.
+- To add a page: create it in `pages/`, add a route in `App.jsx` (wrap it in
+  `<ProtectedRoute permission="...">`), and an entry in `routes/navigation.js` if it needs a menu link.
+
+## Scripts
+
+| Script                            | What it does                       |
+| --------------------------------- | ---------------------------------- |
+| `npm run dev`                     | dev server on :5173 with API proxy |
+| `npm run build`                   | production build into `dist/`      |
+| `npm run lint`                    | oxlint                             |
+| `npm run format` / `format:check` | Prettier (write / check only)      |
 
 ## UX decisions for a non-technical team
 

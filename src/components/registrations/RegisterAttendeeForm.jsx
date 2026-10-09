@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { registrationsApi } from '../api/endpoints'
-import { useToast } from '../context/ToastContext'
-import { Alert, Button, Card, Field } from './ui'
+import { registrationsApi } from '../../api/endpoints'
+import { useToast } from '../../hooks/useToast'
+import { Alert, Button, Card, Field } from '../ui'
 
 const EMPTY = { attendeeName: '', attendeeEmail: '' }
 
@@ -26,7 +26,9 @@ export default function RegisterAttendeeForm({ workshop, onRegistered }) {
       <Card className="p-5">
         <h2 className="font-semibold text-slate-900">Register an attendee</h2>
         <Alert tone="info" className="mt-3">
-          {started ? 'This workshop has already started, so it is no longer taking registrations.' : 'This workshop is not taking registrations right now.'}
+          {started
+            ? 'This workshop has already started, so it is no longer taking registrations.'
+            : 'This workshop is not taking registrations right now.'}
         </Alert>
       </Card>
     )
@@ -69,7 +71,9 @@ export default function RegisterAttendeeForm({ workshop, onRegistered }) {
 
   return (
     <Card className="p-5">
-      <h2 className="font-semibold text-slate-900">{waitlistMode ? 'Add to waitlist' : 'Register an attendee'}</h2>
+      <h2 className="font-semibold text-slate-900">
+        {waitlistMode ? 'Add to waitlist' : 'Register an attendee'}
+      </h2>
 
       <form
         className="mt-4 space-y-4"
@@ -81,22 +85,34 @@ export default function RegisterAttendeeForm({ workshop, onRegistered }) {
       >
         {justFilled ? (
           <Alert tone="warning" title="Sorry, the last seat was just taken">
-            Another booking got there first. You can add {form.attendeeName || 'this person'} to the waitlist. They'll get the next seat that frees up.
+            Another booking got there first. You can add {form.attendeeName || 'this person'} to the waitlist.
+            They'll get the next seat that frees up.
           </Alert>
         ) : (
           workshop.isFull && (
             <Alert tone="info">
-              This workshop is full. New attendees join the waitlist and automatically get the next free seat, in order.
+              This workshop is full. New attendees join the waitlist and automatically get the next free seat,
+              in order.
             </Alert>
           )
         )}
         {formError && <Alert tone="error">{formError}</Alert>}
 
         <Field label="Attendee name" error={errors.attendeeName}>
-          {(p) => <input {...p} value={form.attendeeName} onChange={set('attendeeName')} autoComplete="off" />}
+          {(p) => (
+            <input {...p} value={form.attendeeName} onChange={set('attendeeName')} autoComplete="off" />
+          )}
         </Field>
         <Field label="Attendee email" error={errors.attendeeEmail}>
-          {(p) => <input {...p} type="email" value={form.attendeeEmail} onChange={set('attendeeEmail')} autoComplete="off" />}
+          {(p) => (
+            <input
+              {...p}
+              type="email"
+              value={form.attendeeEmail}
+              onChange={set('attendeeEmail')}
+              autoComplete="off"
+            />
+          )}
         </Field>
 
         {justFilled ? (

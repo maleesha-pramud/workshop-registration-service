@@ -1,14 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { authApi } from '../api/endpoints'
 import { SESSION_EXPIRED_EVENT } from '../api/client'
 import { tokenStore } from '../api/tokenStore'
-
-const AuthContext = createContext(null)
+import { AuthContext } from './auth-context'
 
 /**
  * Holds the signed-in user. The user's permissions come from the API
  * (GET /auth/me), so the UI and backend share one permission matrix.
  * Hiding things in the UI is only for convenience; the backend enforces it.
+ *
+ * status: 'loading' (restoring a saved session) | 'authenticated' | 'anonymous'
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -64,10 +65,4 @@ export function AuthProvider({ children }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
-  return ctx
 }

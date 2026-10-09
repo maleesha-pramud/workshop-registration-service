@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { workshopsApi } from '../api/endpoints'
 import { useApi } from '../hooks/useApi'
 import { useLocations } from '../hooks/useLocations'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../hooks/useToast'
 import { combineDateTime, toDateInput, toTimeInput } from '../utils/dates'
 import { WORKSHOP_STATUS } from '../utils/labels'
 import { Alert, Button, Card, Field, PageHeader, PageLoader } from '../components/ui'
@@ -11,7 +11,11 @@ import { Alert, Button, Card, Field, PageHeader, PageLoader } from '../component
 export default function WorkshopFormPage() {
   const { id } = useParams()
   const isEdit = Boolean(id)
-  const { data: workshop, loading, error } = useApi(() => (isEdit ? workshopsApi.get(id) : Promise.resolve(null)), [id])
+  const {
+    data: workshop,
+    loading,
+    error,
+  } = useApi(() => (isEdit ? workshopsApi.get(id) : Promise.resolve(null)), [id])
 
   if (isEdit && loading) return <PageLoader />
   if (isEdit && error) return <Alert tone="error">{error.message}</Alert>
@@ -22,7 +26,18 @@ export default function WorkshopFormPage() {
 
 function initialValues(w) {
   if (!w) {
-    return { code: '', title: '', instructor: '', locationId: '', date: '', startTime: '10:00', endTime: '12:00', capacity: '20', status: 'OPEN', description: '' }
+    return {
+      code: '',
+      title: '',
+      instructor: '',
+      locationId: '',
+      date: '',
+      startTime: '10:00',
+      endTime: '12:00',
+      capacity: '20',
+      status: 'OPEN',
+      description: '',
+    }
   }
   return {
     code: w.code,
@@ -87,7 +102,9 @@ function WorkshopForm({ workshop }) {
     setErrors({})
     setFormError(null)
     try {
-      const { data } = isEdit ? await workshopsApi.update(workshop.id, payload) : await workshopsApi.create(payload)
+      const { data } = isEdit
+        ? await workshopsApi.update(workshop.id, payload)
+        : await workshopsApi.create(payload)
       notify(isEdit ? 'Workshop updated' : 'Workshop created')
       navigate(`/workshops/${data.id}`)
     } catch (err) {
@@ -106,7 +123,9 @@ function WorkshopForm({ workshop }) {
     <>
       <PageHeader
         title={isEdit ? `Edit ${workshop.title}` : 'New workshop'}
-        subtitle={isEdit ? workshop.code : 'Add a workshop to the catalogue so the front desk can take bookings.'}
+        subtitle={
+          isEdit ? workshop.code : 'Add a workshop to the catalogue so the front desk can take bookings.'
+        }
       />
 
       <Card className="max-w-3xl p-6">
@@ -115,7 +134,14 @@ function WorkshopForm({ workshop }) {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Code" error={errors.code} hint="e.g. POT-101">
-              {(p) => <input {...p} value={values.code} onChange={set('code')} className={`${p.className} uppercase`} />}
+              {(p) => (
+                <input
+                  {...p}
+                  value={values.code}
+                  onChange={set('code')}
+                  className={`${p.className} uppercase`}
+                />
+              )}
             </Field>
             <Field label="Title" error={errors.title} className="sm:col-span-2">
               {(p) => <input {...p} value={values.title} onChange={set('title')} />}
@@ -131,7 +157,9 @@ function WorkshopForm({ workshop }) {
                 <select {...p} value={values.locationId} onChange={set('locationId')}>
                   <option value="">Choose a location</option>
                   {locations.map((l) => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
                   ))}
                 </select>
               )}
@@ -154,16 +182,31 @@ function WorkshopForm({ workshop }) {
             <Field
               label="Capacity (seats)"
               error={errors.capacity}
-              hint={isEdit && workshop.activeCount > 0 ? `${workshop.activeCount} already registered, so capacity can't go lower than that.` : undefined}
+              hint={
+                isEdit && workshop.activeCount > 0
+                  ? `${workshop.activeCount} already registered, so capacity can't go lower than that.`
+                  : undefined
+              }
             >
-              {(p) => <input {...p} type="number" min={Math.max(1, workshop?.activeCount ?? 1)} max={1000} value={values.capacity} onChange={set('capacity')} />}
+              {(p) => (
+                <input
+                  {...p}
+                  type="number"
+                  min={Math.max(1, workshop?.activeCount ?? 1)}
+                  max={1000}
+                  value={values.capacity}
+                  onChange={set('capacity')}
+                />
+              )}
             </Field>
             {isEdit && (
               <Field label="Status" error={errors.status} hint="Only open workshops take registrations.">
                 {(p) => (
                   <select {...p} value={values.status} onChange={set('status')}>
                     {Object.entries(WORKSHOP_STATUS).map(([value, { label }]) => (
-                      <option key={value} value={value}>{label}</option>
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
                     ))}
                   </select>
                 )}

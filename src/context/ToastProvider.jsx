@@ -1,6 +1,5 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
-
-const ToastContext = createContext(null)
+import { useCallback, useMemo, useState } from 'react'
+import { ToastContext } from './toast-context'
 
 const TONES = {
   success: 'bg-emerald-600',
@@ -28,7 +27,10 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col items-end gap-2" aria-live="polite">
+      <div
+        className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col items-end gap-2"
+        aria-live="polite"
+      >
         {toasts.map((t) => (
           <div
             key={t.id}
@@ -36,7 +38,11 @@ export function ToastProvider({ children }) {
           >
             <div className="flex items-start gap-3">
               <span className="flex-1">{t.message}</span>
-              <button onClick={() => dismiss(t.id)} className="text-white/70 hover:text-white" aria-label="Dismiss">
+              <button
+                onClick={() => dismiss(t.id)}
+                className="text-white/70 hover:text-white"
+                aria-label="Dismiss"
+              >
                 ✕
               </button>
             </div>
@@ -45,10 +51,4 @@ export function ToastProvider({ children }) {
       </div>
     </ToastContext.Provider>
   )
-}
-
-export function useToast() {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used inside <ToastProvider>')
-  return ctx
 }

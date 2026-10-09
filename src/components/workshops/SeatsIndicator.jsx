@@ -1,16 +1,13 @@
-import { Badge } from './ui'
-import { WORKSHOP_STATUS } from '../utils/labels'
-
-export function WorkshopStatusBadge({ status }) {
-  const s = WORKSHOP_STATUS[status] ?? { label: status, tone: 'gray' }
-  return <Badge tone={s.tone}>{s.label}</Badge>
-}
-
 /** "5 of 20 seats left" with a fill bar; colour warns as the workshop fills up. */
 export function SeatsIndicator({ workshop, compact = false }) {
   const { capacity, activeCount, seatsLeft, waitlistCount } = workshop
   const pct = Math.min(100, Math.round((activeCount / capacity) * 100))
-  const tone = seatsLeft === 0 ? 'bg-red-500' : seatsLeft <= Math.max(2, capacity * 0.2) ? 'bg-amber-500' : 'bg-emerald-500'
+  const tone =
+    seatsLeft === 0
+      ? 'bg-red-500'
+      : seatsLeft <= Math.max(2, capacity * 0.2)
+        ? 'bg-amber-500'
+        : 'bg-emerald-500'
 
   return (
     <div className={compact ? 'w-36' : 'w-full max-w-xs'}>

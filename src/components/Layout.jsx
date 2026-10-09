@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { NAV_ITEMS } from '../routes/navigation'
 import { ROLE_LABELS } from '../utils/labels'
 import { Badge, Button } from './ui'
@@ -28,7 +28,9 @@ export default function Layout() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3">
           <span className="flex items-center gap-2 font-semibold text-slate-900">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-sm text-white">WD</span>
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-sm text-white">
+              WD
+            </span>
             Workshop Desk
           </span>
 

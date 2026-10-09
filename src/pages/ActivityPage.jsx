@@ -1,9 +1,15 @@
 import { useState } from 'react'
 import { auditApi } from '../api/endpoints'
 import { useApi } from '../hooks/useApi'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { formatDateTime } from '../utils/dates'
-import { REGISTRATION_STATUS, ROLE_LABELS, WORKSHOP_STATUS, auditActionLabel, fieldLabel } from '../utils/labels'
+import {
+  REGISTRATION_STATUS,
+  ROLE_LABELS,
+  WORKSHOP_STATUS,
+  auditActionLabel,
+  fieldLabel,
+} from '../utils/labels'
 import { Alert, Card, EmptyState, PageHeader, PageLoader, Pagination } from '../components/ui'
 
 // Each role sees the history of what it manages (enforced by the API too).
@@ -29,7 +35,9 @@ function formatValue(field, value) {
 function Changes({ changes }) {
   if (!changes || typeof changes !== 'object') return null
   // The headline already names the person and workshop, so skip repeated identity fields.
-  const entries = Object.entries(changes).filter(([k]) => !['workshopId', 'attendeeName', 'attendeeEmail'].includes(k))
+  const entries = Object.entries(changes).filter(
+    ([k]) => !['workshopId', 'attendeeName', 'attendeeEmail'].includes(k),
+  )
   if (!entries.length) return null
   return (
     <ul className="mt-1 space-y-0.5 text-xs text-slate-500">
@@ -38,7 +46,8 @@ function Changes({ changes }) {
           <span className="font-medium text-slate-600">{fieldLabel(field)}:</span>{' '}
           {v && typeof v === 'object' && 'to' in v ? (
             <>
-              {formatValue(field, v.from)} → <span className="text-slate-700">{formatValue(field, v.to)}</span>
+              {formatValue(field, v.from)} →{' '}
+              <span className="text-slate-700">{formatValue(field, v.to)}</span>
             </>
           ) : (
             formatValue(field, v)
@@ -62,7 +71,11 @@ export default function ActivityPage() {
     <>
       <PageHeader
         title="Activity log"
-        subtitle={user.role === 'ADMIN' ? 'Who created, changed or deactivated staff accounts, and when.' : 'Who changed workshops and registrations, and when.'}
+        subtitle={
+          user.role === 'ADMIN'
+            ? 'Who created, changed or deactivated staff accounts, and when.'
+            : 'Who changed workshops and registrations, and when.'
+        }
       />
 
       <Card>
@@ -73,7 +86,9 @@ export default function ActivityPage() {
                 key={f.value}
                 onClick={() => setParams({ entityType: f.value, page: 1 })}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium ring-1 ${
-                  params.entityType === f.value ? 'bg-indigo-600 text-white ring-indigo-600' : 'bg-white text-slate-700 ring-slate-300 hover:bg-slate-50'
+                  params.entityType === f.value
+                    ? 'bg-indigo-600 text-white ring-indigo-600'
+                    : 'bg-white text-slate-700 ring-slate-300 hover:bg-slate-50'
                 }`}
               >
                 {f.label}
@@ -82,7 +97,11 @@ export default function ActivityPage() {
           </div>
         )}
 
-        {error && <Alert tone="error" className="m-4">{error.message}</Alert>}
+        {error && (
+          <Alert tone="error" className="m-4">
+            {error.message}
+          </Alert>
+        )}
         {loading && !data ? (
           <PageLoader />
         ) : data?.length === 0 ? (
