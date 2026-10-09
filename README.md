@@ -41,7 +41,7 @@ src/
   pages/           one file per screen: Login, Workshops, WorkshopDetail, WorkshopForm, Users,
                    Attendees, Activity, Forbidden, NotFound
   components/
-    ui/            generic building blocks: Button, Field, Card, Modal, Alert, Badge, ...
+    ui/            generic building blocks: Button, Field, Card, Modal, ConfirmDialog, StatusToggle, SearchInput, ChipGroup, ...
     users/         UsersTable and the create / edit / reset-password dialogs
     workshops/     SeatsIndicator, WorkshopStatusBadge
     registrations/ RegisterAttendeeForm, CancelRegistrationDialog

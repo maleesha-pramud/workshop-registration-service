@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { auditApi } from '../api/endpoints'
 import { useApi } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
-import { formatDateTime } from '../utils/dates'
+import { formatDateTime, formatRelative } from '../utils/dates'
 import {
   REGISTRATION_STATUS,
   ROLE_LABELS,
@@ -10,15 +10,15 @@ import {
   auditActionLabel,
   fieldLabel,
 } from '../utils/labels'
-import { Alert, Card, EmptyState, PageHeader, PageLoader, Pagination } from '../components/ui'
+import { Alert, Card, ChipGroup, EmptyState, PageHeader, PageLoader, Pagination } from '../components/ui'
 
 // Each role sees the history of what it manages (enforced by the API too).
 const FILTERS = {
-  ADMIN: [{ value: '', label: 'All account changes' }],
+  ADMIN: [{ id: '', label: 'All account changes' }],
   MANAGER: [
-    { value: '', label: 'Everything' },
-    { value: 'WORKSHOP', label: 'Workshops' },
-    { value: 'REGISTRATION', label: 'Registrations' },
+    { id: '', label: 'Everything' },
+    { id: 'WORKSHOP', label: 'Workshops' },
+    { id: 'REGISTRATION', label: 'Registrations' },
   ],
 }
 
@@ -80,20 +80,13 @@ export default function ActivityPage() {
 
       <Card>
         {filters.length > 1 && (
-          <div className="flex flex-wrap gap-2 border-b border-slate-200 p-4">
-            {filters.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setParams({ entityType: f.value, page: 1 })}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium ring-1 ${
-                  params.entityType === f.value
-                    ? 'bg-indigo-600 text-white ring-indigo-600'
-                    : 'bg-white text-slate-700 ring-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="border-b border-slate-200 p-4">
+            <ChipGroup
+              label="Show"
+              options={filters}
+              value={params.entityType}
+              onChange={(f) => setParams({ entityType: f.id, page: 1 })}
+            />
           </div>
         )}
 
@@ -105,13 +98,19 @@ export default function ActivityPage() {
         {loading && !data ? (
           <PageLoader />
         ) : data?.length === 0 ? (
-          <EmptyState title="Nothing recorded yet" />
+          <EmptyState title="Nothing recorded yet">
+            Changes will appear here as soon as someone makes one.
+          </EmptyState>
         ) : (
           <ul className={`divide-y divide-slate-100 ${loading ? 'opacity-60' : ''}`}>
             {data?.map((entry) => (
               <li key={entry.id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:gap-6">
-                <time className="w-36 shrink-0 text-sm text-slate-500" dateTime={entry.createdAt}>
-                  {formatDateTime(entry.createdAt)}
+                <time
+                  className="w-36 shrink-0 text-sm text-slate-500"
+                  dateTime={entry.createdAt}
+                  title={formatDateTime(entry.createdAt)}
+                >
+                  {formatRelative(entry.createdAt)}
                 </time>
                 <div className="min-w-0 flex-1 text-sm">
                   <p>

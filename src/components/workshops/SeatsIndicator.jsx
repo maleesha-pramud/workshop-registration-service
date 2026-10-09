@@ -13,7 +13,7 @@ export function SeatsIndicator({ workshop, compact = false }) {
     <div className={compact ? 'w-36' : 'w-full max-w-xs'}>
       <div className="flex items-baseline justify-between text-sm">
         <span className={seatsLeft === 0 ? 'font-semibold text-red-600' : 'font-medium text-slate-900'}>
-          {seatsLeft === 0 ? 'Full' : `${seatsLeft} left`}
+          {seatsLeft === 0 ? 'Full' : `${seatsLeft} ${seatsLeft === 1 ? 'seat' : 'seats'} left`}
         </span>
         <span className="text-xs text-slate-500">
           {activeCount}/{capacity}

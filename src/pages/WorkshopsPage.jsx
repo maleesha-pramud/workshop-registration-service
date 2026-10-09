@@ -4,12 +4,22 @@ import { useApi } from '../hooks/useApi'
 import { useLocations } from '../hooks/useLocations'
 import { useAuth } from '../hooks/useAuth'
 import { PRESETS, toApiParams, useWorkshopFilters } from '../hooks/useWorkshopFilters'
-import { formatDate, formatTimeRange } from '../utils/dates'
+import { formatDay, formatTimeRange } from '../utils/dates'
 import { WORKSHOP_STATUS } from '../utils/labels'
 import { SeatsIndicator } from '../components/workshops/SeatsIndicator'
 import { WorkshopStatusToggle } from '../components/workshops/WorkshopStatusToggle'
 import { WorkshopStatusBadge } from '../components/workshops/WorkshopStatusBadge'
-import { Alert, Button, Card, EmptyState, PageHeader, PageLoader, Pagination } from '../components/ui'
+import {
+  Alert,
+  Button,
+  Card,
+  ChipGroup,
+  EmptyState,
+  PageHeader,
+  PageLoader,
+  Pagination,
+  SearchInput,
+} from '../components/ui'
 
 export default function WorkshopsPage() {
   const { can } = useAuth()
@@ -40,31 +50,22 @@ export default function WorkshopsPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Quick filters">
-        {PRESETS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => applyPreset(p)}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium ring-1 transition-colors ${
-              activePreset === p.id
-                ? 'bg-indigo-600 text-white ring-indigo-600'
-                : 'bg-white text-slate-700 ring-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
+      <ChipGroup
+        className="mb-4"
+        label="Quick filters"
+        options={PRESETS}
+        value={activePreset}
+        onChange={applyPreset}
+      />
 
       <Card className="mb-4 p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-          <input
-            type="search"
+          <SearchInput
+            className="lg:col-span-2"
             placeholder="Search code, title or instructor"
-            aria-label="Search workshops"
-            className={`${inputClass} lg:col-span-2`}
+            label="Search workshops"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
           />
           <label className="flex items-center gap-2 text-sm text-slate-600">
             <span className="shrink-0">From</span>
@@ -132,8 +133,18 @@ export default function WorkshopsPage() {
         {loading && !workshops ? (
           <PageLoader />
         ) : workshops?.length === 0 ? (
-          <EmptyState title="No workshops match these filters">
-            Try a wider date range or clear some filters.
+          <EmptyState
+            title="No workshops match these filters"
+            action={
+              <Button
+                variant="secondary"
+                onClick={() => applyPreset(PRESETS.find((p) => p.id === 'upcoming'))}
+              >
+                Show all upcoming workshops
+              </Button>
+            }
+          >
+            Try a wider date range or remove some filters.
           </EmptyState>
         ) : (
           <ul className={`divide-y divide-slate-100 ${loading ? 'opacity-60' : ''}`}>
@@ -144,7 +155,7 @@ export default function WorkshopsPage() {
                   className="flex min-w-0 flex-1 flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center"
                 >
                   <div className="w-36 shrink-0 text-sm">
-                    <p className="font-medium text-slate-900">{formatDate(w.startsAt)}</p>
+                    <p className="font-medium text-slate-900">{formatDay(w.startsAt)}</p>
                     <p className="text-slate-500">{formatTimeRange(w.startsAt, w.endsAt)}</p>
                   </div>
                   <div className="min-w-0 flex-1">

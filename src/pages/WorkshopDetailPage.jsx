@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { registrationsApi, workshopsApi } from '../api/endpoints'
 import { useApi } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
-import { formatDate, formatDateTime, formatTimeRange } from '../utils/dates'
+import { usePageTitle } from '../hooks/usePageTitle'
+import { formatDateTime, formatDay, formatTimeRange } from '../utils/dates'
 import { REGISTRATION_STATUS, WORKSHOP_STATUS } from '../utils/labels'
 import { SeatsIndicator } from '../components/workshops/SeatsIndicator'
 import { WorkshopStatusBadge } from '../components/workshops/WorkshopStatusBadge'
@@ -28,6 +29,7 @@ export default function WorkshopDetailPage() {
   const [promotedNotice, setPromotedNotice] = useState([])
 
   const workshop = workshopQuery.data
+  usePageTitle(workshop?.title)
   const registrations = registrationsQuery.data ?? []
 
   // Seats and the list always change together, so always refresh both.
@@ -76,7 +78,7 @@ export default function WorkshopDetailPage() {
 
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <Detail label="When">
-            {formatDate(workshop.startsAt)}
+            {formatDay(workshop.startsAt)}
             <br />
             {formatTimeRange(workshop.startsAt, workshop.endsAt)}
           </Detail>
@@ -102,7 +104,8 @@ export default function WorkshopDetailPage() {
         <Alert tone="success" title="Seat passed to the waitlist">
           {promotedNotice.map((r) => (
             <p key={r.id}>
-              <strong>{r.attendeeName}</strong> ({r.attendeeEmail}) now has a seat. Please let them know.
+              <strong>{r.attendeeName}</strong> (<EmailLink email={r.attendeeEmail} />) now has a seat. Please
+              let them know.
             </p>
           ))}
           <button className="mt-2 text-sm font-medium underline" onClick={() => setPromotedNotice([])}>
@@ -148,7 +151,7 @@ export default function WorkshopDetailPage() {
           {registrationsQuery.loading && !registrationsQuery.data ? (
             <PageLoader />
           ) : visible.length === 0 ? (
-            <EmptyState title={tab === 'WAITLISTED' ? 'Nobody is waiting' : 'No registrations here yet'} />
+            <EmptyState title={EMPTY_TITLES[tab]}>{emptyHint(tab, can('REGISTRATIONS_WRITE'))}</EmptyState>
           ) : (
             <ul className="divide-y divide-slate-100">
               {visible.map((r) => (
@@ -186,6 +189,28 @@ export default function WorkshopDetailPage() {
   )
 }
 
+const EMPTY_TITLES = {
+  ACTIVE: 'Nobody is registered yet',
+  WAITLISTED: 'Nobody is on the waitlist',
+  CANCELLED: 'No cancellations',
+  ALL: 'No registrations yet',
+}
+
+function emptyHint(tab, canRegister) {
+  if (tab === 'WAITLISTED') return 'People join the waitlist when every seat is taken.'
+  if (tab === 'CANCELLED') return 'Cancelled bookings are kept here, with who cancelled and when.'
+  return canRegister ? 'Use the form on the left to register the first attendee.' : null
+}
+
+/** Opens the user's mail app addressed to the attendee. */
+function EmailLink({ email }) {
+  return (
+    <a href={`mailto:${email}`} className="text-slate-500 hover:text-indigo-700 hover:underline">
+      {email}
+    </a>
+  )
+}
+
 function Detail({ label, children }) {
   return (
     <div>
@@ -209,7 +234,9 @@ function RegistrationRow({ registration: r, canCancel, onCancel }) {
           {r.waitlistPosition && <span className="mr-1 text-sky-700">#{r.waitlistPosition}</span>}
           {r.attendeeName}
         </p>
-        <p className="truncate text-sm text-slate-500">{r.attendeeEmail}</p>
+        <p className="truncate text-sm">
+          <EmailLink email={r.attendeeEmail} />
+        </p>
         <p className="mt-1 text-xs text-slate-500">
           {r.status === 'WAITLISTED' ? 'Waitlisted' : 'Registered'} by {r.registeredBy.name} ·{' '}
           {formatDateTime(r.registeredAt)}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usersApi } from '../../api/endpoints'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
+import { generatePassword } from '../../utils/password'
 import { Alert, Button, Field, Modal } from '../ui'
 
 export function ResetPasswordModal({ user, onClose, onDone }) {
@@ -42,6 +43,16 @@ export function ResetPasswordModal({ user, onClose, onDone }) {
             />
           )}
         </Field>
+        <button
+          type="button"
+          className="text-sm font-medium text-indigo-600 hover:underline"
+          onClick={() => setPassword(generatePassword())}
+        >
+          Suggest a password
+        </button>
+        <p className="text-sm text-slate-500">
+          Tell {user.name} the new password in person. It works straight away.
+        </p>
       </form>
     </Modal>
   )

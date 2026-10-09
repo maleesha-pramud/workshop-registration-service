@@ -2,23 +2,49 @@ import { useState } from 'react'
 import { usersApi } from '../api/endpoints'
 import { useApi } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
-import { Alert, Button, Card, EmptyState, PageHeader, PageLoader, Pagination } from '../components/ui'
+import {
+  Alert,
+  Button,
+  Card,
+  ChipGroup,
+  EmptyState,
+  PageHeader,
+  PageLoader,
+  Pagination,
+  SearchInput,
+} from '../components/ui'
 import { UsersTable } from '../components/users/UsersTable'
 import { CreateUserModal } from '../components/users/CreateUserModal'
 import { EditUserModal } from '../components/users/EditUserModal'
 import { ResetPasswordModal } from '../components/users/ResetPasswordModal'
 
+const STATUS_FILTERS = [
+  { id: '', label: 'Everyone' },
+  { id: 'active', label: 'Active' },
+  { id: 'inactive', label: 'Deactivated' },
+]
+
 /** Admin-only: create staff accounts, change roles, deactivate, reset passwords. */
 export default function UsersPage() {
   const { user: me } = useAuth()
-  const [params, setParams] = useState({ q: '', page: 1 })
+  const [params, setParams] = useState({ q: '', status: '', page: 1 })
   const {
     data: users,
     meta,
     loading,
     error,
     reload,
-  } = useApi(() => usersApi.list({ q: params.q || undefined, page: params.page, pageSize: 20 }), [params])
+  } = useApi(
+    () =>
+      usersApi.list({
+        q: params.q || undefined,
+        isActive: params.status ? String(params.status === 'active') : undefined,
+        page: params.page,
+        pageSize: 20,
+      }),
+    [params],
+  )
+  const filtered = Boolean(params.q || params.status)
 
   // Which dialog is open: { type: 'create' | 'edit' | 'password', user? }
   const [modal, setModal] = useState(null)
@@ -37,14 +63,19 @@ export default function UsersPage() {
       />
 
       <Card>
-        <div className="border-b border-slate-200 p-4">
-          <input
-            type="search"
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
+          <SearchInput
+            className="max-w-sm"
             placeholder="Search by name or email"
-            aria-label="Search staff"
-            className="w-full max-w-sm rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-slate-300 focus:ring-2 focus:ring-indigo-600"
+            label="Search staff"
             value={params.q}
-            onChange={(e) => setParams({ q: e.target.value, page: 1 })}
+            onChange={(q) => setParams((p) => ({ ...p, q, page: 1 }))}
+          />
+          <ChipGroup
+            label="Show"
+            options={STATUS_FILTERS}
+            value={params.status}
+            onChange={(o) => setParams((p) => ({ ...p, status: o.id, page: 1 }))}
           />
         </div>
 
@@ -56,7 +87,16 @@ export default function UsersPage() {
         {loading && !users ? (
           <PageLoader />
         ) : users?.length === 0 ? (
-          <EmptyState title="No accounts found" />
+          <EmptyState
+            title={filtered ? 'No accounts match your search' : 'No accounts yet'}
+            action={
+              filtered && (
+                <Button variant="secondary" onClick={() => setParams({ q: '', status: '', page: 1 })}>
+                  Clear search and filters
+                </Button>
+              )
+            }
+          />
         ) : (
           users && (
             <UsersTable
