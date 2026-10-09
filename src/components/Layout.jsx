@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { NAV_ITEMS } from '../routes/navigation'
 import { ROLE_LABELS } from '../utils/labels'
@@ -7,8 +7,16 @@ import { Badge, Button } from './ui'
 
 export default function Layout() {
   const { user, logout, can } = useAuth()
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const items = NAV_ITEMS.filter((item) => can(item.permission))
+
+  // Go to /login explicitly so the next person to sign in starts on their own
+  // home page, not on whatever page the previous user had open.
+  const signOut = () => {
+    navigate('/login', { replace: true })
+    logout()
+  }
 
   const linkClass = ({ isActive }) =>
     `block rounded-lg px-3 py-2 text-sm font-medium ${
@@ -37,7 +45,7 @@ export default function Layout() {
               <p className="text-sm font-medium text-slate-900">{user.name}</p>
               <Badge tone="indigo">{ROLE_LABELS[user.role]}</Badge>
             </div>
-            <Button variant="secondary" size="sm" onClick={logout}>
+            <Button variant="secondary" size="sm" onClick={signOut}>
               Sign out
             </Button>
           </div>
@@ -65,7 +73,7 @@ export default function Layout() {
               <span className="text-sm">
                 {user.name} · {ROLE_LABELS[user.role]}
               </span>
-              <Button variant="secondary" size="sm" onClick={logout}>
+              <Button variant="secondary" size="sm" onClick={signOut}>
                 Sign out
               </Button>
             </div>
