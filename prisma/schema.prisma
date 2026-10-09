@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+// "Full" is deliberately NOT a status: it is derived from capacity - activeCount,
+// so it can never drift out of sync with the real registrations.
+enum WorkshopStatus {
+  OPEN // accepting registrations
+  CLOSED // registrations closed manually (still going ahead)
+  CANCELLED // workshop will not run
+  COMPLETED // workshop has taken place
+}
+
+enum RegistrationStatus {
+  ACTIVE // holds a seat
+  WAITLISTED // queued for a seat, does not hold one
+  CANCELLED // kept forever for history; never deleted
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(191)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         Role
+  // Users are deactivated, never deleted, so history keeps pointing at real people.
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  workshopsCreated       Workshop[]     @relation("WorkshopCreatedBy")
+  workshopsUpdated       Workshop[]     @relation("WorkshopUpdatedBy")
+  registrationsCreated   Registration[] @relation("RegisteredBy")
+  registrationsCancelled Registration[] @relation("CancelledBy")
+  auditLogs              AuditLog[]
+
+  @@map("users")
+}
+
+model Location {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(120)
+  address   String?    @db.VarChar(255)
+  workshops Workshop[]
+
+  @@map("locations")
+}
+
+model Workshop {
+  id          Int            @id @default(autoincrement())
+  code        String         @unique @db.VarChar(32)
+  title       String         @db.VarChar(160)
+  description String?        @db.Text
+  instructor  String         @db.VarChar(120)
+  locationId  Int            @map("location_id")
+  startsAt    DateTime       @map("starts_at")
+  endsAt      DateTime       @map("ends_at")
+  capacity    Int
+  // Seats currently held (ACTIVE registrations). Maintained in the same transaction
+  // as every registration change, under a row lock on this workshop. A CHECK
+  // constraint (see migration) guarantees 0 <= active_count <= capacity.
+  activeCount Int            @default(0) @map("active_count")
+  status      WorkshopStatus @default(OPEN)
+  createdById Int            @map("created_by_id")
+  updatedById Int?           @map("updated_by_id")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  location      Location       @relation(fields: [locationId], references: [id])
+  createdBy     User           @relation("WorkshopCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User?          @relation("WorkshopUpdatedBy", fields: [updatedById], references: [id])
+  registrations Registration[]
+
+  @@index([startsAt])
+  @@index([status, startsAt])
+  @@index([locationId, startsAt])
+  @@map("workshops")
+}
+
+model Registration {
+  id             Int                @id @default(autoincrement())
+  workshopId     Int                @map("workshop_id")
+  attendeeName   String             @map("attendee_name") @db.VarChar(120)
+  attendeeEmail  String             @map("attendee_email") @db.VarChar(191)
+  status         RegistrationStatus
+  registeredById Int                @map("registered_by_id")
+  registeredAt   DateTime           @default(now()) @map("registered_at")
+  // Set when a WAITLISTED registration is moved into a freed seat.
+  promotedAt     DateTime?          @map("promoted_at")
+  cancelledById  Int?               @map("cancelled_by_id")
+  cancelledAt    DateTime?          @map("cancelled_at")
+  cancelReason   String?            @map("cancel_reason") @db.VarChar(255)
+
+  workshop     Workshop @relation(fields: [workshopId], references: [id])
+  registeredBy User     @relation("RegisteredBy", fields: [registeredById], references: [id])
+  cancelledBy  User?    @relation("CancelledBy", fields: [cancelledById], references: [id])
+
+  @@index([workshopId, status, registeredAt])
+  @@index([attendeeEmail])
+  @@map("registrations")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actorId    Int      @map("actor_id")
+  action     String   @db.VarChar(64)
+  entityType String   @map("entity_type") @db.VarChar(32)
+  entityId   Int      @map("entity_id")
+  changes    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
