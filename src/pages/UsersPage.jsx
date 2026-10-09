@@ -64,6 +64,7 @@ export default function UsersPage() {
               currentUserId={me.id}
               onEdit={(user) => setModal({ type: 'edit', user })}
               onResetPassword={(user) => setModal({ type: 'password', user })}
+              onChanged={reload}
             />
           )
         )}

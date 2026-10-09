@@ -1,8 +1,9 @@
 import { ROLE_LABELS } from '../../utils/labels'
 import { formatDate } from '../../utils/dates'
 import { Badge, Button } from '../ui'
+import { UserStatusToggle } from './UserStatusToggle'
 
-export function UsersTable({ users, currentUserId, onEdit, onResetPassword }) {
+export function UsersTable({ users, currentUserId, onEdit, onResetPassword, onChanged }) {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
@@ -29,7 +30,10 @@ export function UsersTable({ users, currentUserId, onEdit, onResetPassword }) {
               </td>
               <td className="px-4 py-3">{ROLE_LABELS[u.role]}</td>
               <td className="px-4 py-3">
-                <Badge tone={u.isActive ? 'green' : 'gray'}>{u.isActive ? 'Active' : 'Deactivated'}</Badge>
+                <div className="flex items-center gap-3">
+                  <UserStatusToggle user={u} isSelf={u.id === currentUserId} onChanged={onChanged} />
+                  <Badge tone={u.isActive ? 'green' : 'gray'}>{u.isActive ? 'Active' : 'Deactivated'}</Badge>
+                </div>
               </td>
               <td className="whitespace-nowrap px-4 py-3">{formatDate(u.createdAt)}</td>
               <td className="whitespace-nowrap px-4 py-3 text-right">
