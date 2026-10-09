@@ -4,36 +4,20 @@ import { authorize } from '../../middleware/authorize.js';
 import { validate } from '../../middleware/validate.js';
 import { idParam } from '../../lib/validators.js';
 import * as schemas from './users.schemas.js';
-import * as usersService from './users.service.js';
+import * as controller from './users.controller.js';
 
 const router = Router();
 
+// Every route here is admin-only.
 router.use(authenticate, authorize('USERS_MANAGE'));
 
-router.get('/', validate({ query: schemas.listUsersQuery }), async (req, res) => {
-  const { items, meta } = await usersService.listUsers(req.validatedQuery);
-  res.json({ data: items, meta });
-});
-
-router.post('/', validate({ body: schemas.createUserBody }), async (req, res) => {
-  res.status(201).json({ data: await usersService.createUser(req.body, req.user) });
-});
-
-router.patch(
-  '/:id',
-  validate({ params: idParam, body: schemas.updateUserBody }),
-  async (req, res) => {
-    res.json({ data: await usersService.updateUser(req.params.id, req.body, req.user) });
-  },
-);
-
+router.get('/', validate({ query: schemas.listUsersQuery }), controller.list);
+router.post('/', validate({ body: schemas.createUserBody }), controller.create);
+router.patch('/:id', validate({ params: idParam, body: schemas.updateUserBody }), controller.update);
 router.post(
   '/:id/reset-password',
   validate({ params: idParam, body: schemas.resetPasswordBody }),
-  async (req, res) => {
-    await usersService.resetPassword(req.params.id, req.body.password, req.user);
-    res.status(204).end();
-  },
+  controller.resetPassword,
 );
 
 export default router;

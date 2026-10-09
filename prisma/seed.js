@@ -45,11 +45,51 @@ async function seedDemo(locations) {
   });
 
   const workshops = [
-    { code: 'POT-101', title: 'Intro to Pottery', instructor: 'Lena Clay', days: 2, hour: 10, capacity: 20, loc: 0 },
-    { code: 'CODE-201', title: 'Python for Beginners', instructor: 'Arun Patel', days: 3, hour: 18, capacity: 15, loc: 1 },
-    { code: 'FIT-110', title: 'Morning HIIT', instructor: 'Jo Rivers', days: 1, hour: 7, capacity: 3, loc: 2 },
-    { code: 'ART-150', title: 'Watercolour Basics', instructor: 'Mia Chen', days: 9, hour: 14, capacity: 12, loc: 0 },
-    { code: 'CODE-305', title: 'Build a Website', instructor: 'Arun Patel', days: 12, hour: 18, capacity: 10, loc: 1 },
+    {
+      code: 'POT-101',
+      title: 'Intro to Pottery',
+      instructor: 'Lena Clay',
+      days: 2,
+      hour: 10,
+      capacity: 20,
+      loc: 0,
+    },
+    {
+      code: 'CODE-201',
+      title: 'Python for Beginners',
+      instructor: 'Arun Patel',
+      days: 3,
+      hour: 18,
+      capacity: 15,
+      loc: 1,
+    },
+    {
+      code: 'FIT-110',
+      title: 'Morning HIIT',
+      instructor: 'Jo Rivers',
+      days: 1,
+      hour: 7,
+      capacity: 3,
+      loc: 2,
+    },
+    {
+      code: 'ART-150',
+      title: 'Watercolour Basics',
+      instructor: 'Mia Chen',
+      days: 9,
+      hour: 14,
+      capacity: 12,
+      loc: 0,
+    },
+    {
+      code: 'CODE-305',
+      title: 'Build a Website',
+      instructor: 'Arun Patel',
+      days: 12,
+      hour: 18,
+      capacity: 10,
+      loc: 1,
+    },
   ];
 
   for (const w of workshops) {
@@ -75,9 +115,7 @@ async function seedDemo(locations) {
 async function main() {
   const locations = [];
   for (const loc of LOCATIONS) {
-    locations.push(
-      await prisma.location.upsert({ where: { name: loc.name }, update: {}, create: loc }),
-    );
+    locations.push(await prisma.location.upsert({ where: { name: loc.name }, update: {}, create: loc }));
   }
 
   const admin = await upsertUser({
@@ -90,7 +128,9 @@ async function main() {
 
   if (process.env.SEED_DEMO === 'true') {
     await seedDemo(locations);
-    console.log('Demo users (manager@centre.local / Manager@12345, staff@centre.local / Staff@12345) and workshops ready');
+    console.log(
+      'Demo users (manager@centre.local / Manager@12345, staff@centre.local / Staff@12345) and workshops ready',
+    );
   }
 }
 

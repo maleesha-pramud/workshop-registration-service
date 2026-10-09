@@ -6,7 +6,10 @@ const role = z.enum(['ADMIN', 'MANAGER', 'STAFF']);
 export const listUsersQuery = z.object({
   q: z.string().trim().max(100).optional(),
   role: role.optional(),
-  isActive: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+  isActive: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
   ...pagination,
 });
 

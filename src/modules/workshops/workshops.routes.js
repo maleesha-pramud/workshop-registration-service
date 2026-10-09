@@ -4,44 +4,31 @@ import { authorize } from '../../middleware/authorize.js';
 import { validate } from '../../middleware/validate.js';
 import { idParam } from '../../lib/validators.js';
 import * as schemas from './workshops.schemas.js';
-import * as workshopsService from './workshops.service.js';
+import * as controller from './workshops.controller.js';
 
 const router = Router();
 
 router.use(authenticate);
 
+// Reading: manager + staff. Writing: manager only (see config/permissions.js).
 router.get(
   '/',
   authorize('WORKSHOPS_READ'),
   validate({ query: schemas.listWorkshopsQuery }),
-  async (req, res) => {
-    const { items, meta } = await workshopsService.listWorkshops(req.validatedQuery);
-    res.json({ data: items, meta });
-  },
+  controller.list,
 );
-
-router.get('/:id', authorize('WORKSHOPS_READ'), validate({ params: idParam }), async (req, res) => {
-  res.json({ data: await workshopsService.getWorkshop(req.params.id) });
-});
-
+router.get('/:id', authorize('WORKSHOPS_READ'), validate({ params: idParam }), controller.get);
 router.post(
   '/',
   authorize('WORKSHOPS_WRITE'),
   validate({ body: schemas.createWorkshopBody }),
-  async (req, res) => {
-    res.status(201).json({ data: await workshopsService.createWorkshop(req.body, req.user) });
-  },
+  controller.create,
 );
-
 router.patch(
   '/:id',
   authorize('WORKSHOPS_WRITE'),
   validate({ params: idParam, body: schemas.updateWorkshopBody }),
-  async (req, res) => {
-    res.json({
-      data: await workshopsService.updateWorkshop(req.params.id, req.body, req.user),
-    });
-  },
+  controller.update,
 );
 
 export default router;

@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { z } from 'zod';
 import { validate } from '../../middleware/validate.js';
 import { authenticate } from '../../middleware/authenticate.js';
-import { email } from '../../lib/validators.js';
-import * as authService from './auth.service.js';
+import { loginBody } from './auth.schemas.js';
+import * as controller from './auth.controller.js';
 
 const router = Router();
 
@@ -18,17 +17,7 @@ const loginLimiter = rateLimit({
   },
 });
 
-const loginSchema = z.object({
-  email,
-  password: z.string().min(1, 'Password is required'),
-});
-
-router.post('/login', loginLimiter, validate({ body: loginSchema }), async (req, res) => {
-  res.json({ data: await authService.login(req.body) });
-});
-
-router.get('/me', authenticate, (req, res) => {
-  res.json({ data: authService.toSessionUser(req.user) });
-});
+router.post('/login', loginLimiter, validate({ body: loginBody }), controller.login);
+router.get('/me', authenticate, controller.me);
 
 export default router;

@@ -10,22 +10,60 @@ Requires Node 20+ and a running MySQL 8 (CHECK constraints need 8.0.16+).
 
 ```bash
 npm install
-cp .env.example .env        # then edit DATABASE_URL (URL-encode special characters: @ -> %40)
-npx prisma migrate dev      # creates the database, tables and constraints
-npm run seed                # 3 locations + first Admin (SEED_DEMO=true adds demo data)
-npm run dev                 # http://localhost:4000
-npm run test:race           # concurrency proof (needs the API running + demo seed)
+cp .env.example .env     # then edit DATABASE_URL (URL-encode special characters: @ -> %40)
+npm run db:migrate       # creates the database, tables and constraints
+npm run seed             # 3 locations + first Admin (SEED_DEMO=true adds demo data)
+npm run dev              # http://localhost:4000, restarts on file changes
+npm run test:race        # concurrency proof (needs the API running + demo seed)
 ```
+
+### npm scripts
+
+| Script                             | What it does                                                        |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| `dev` / `start`                    | run the API with auto-restart / run it plainly                      |
+| `setup`                            | apply migrations and seed, for a fresh deployment                   |
+| `db:migrate` / `db:deploy`         | create+apply a migration in development / apply existing migrations |
+| `db:reset`                         | **wipe** the database, re-apply migrations, re-seed                 |
+| `db:studio`                        | browse the data in Prisma Studio                                    |
+| `seed`                             | idempotent seed, safe to run repeatedly                             |
+| `test:race`                        | concurrent-request test of the capacity rule                        |
+| `lint` / `format` / `format:check` | oxlint / Prettier (write) / Prettier (check only)                   |
 
 Seeded accounts (demo seed only, change them in real use):
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@centre.local | Admin@12345 |
-| Manager | manager@centre.local | Manager@12345 |
-| Staff (front desk) | staff@centre.local | Staff@12345 |
+| Role               | Email                | Password      |
+| ------------------ | -------------------- | ------------- |
+| Admin              | admin@centre.local   | Admin@12345   |
+| Manager            | manager@centre.local | Manager@12345 |
+| Staff (front desk) | staff@centre.local   | Staff@12345   |
 
 There is no public signup: the first Admin is seeded and Admins create every other account.
+
+## Project structure
+
+```
+prisma/
+  schema.prisma        data model (users, locations, workshops, registrations, audit_logs)
+  migrations/          SQL history, including the hand-written CHECK constraints
+  seed.js              idempotent seed
+scripts/race-test.js   concurrency proof against a running API
+src/
+  server.js            starts the HTTP server          app.js   builds the Express app
+  routes.js            mounts every module under /api (read this first for the route map)
+  config/              env.js (validated environment), permissions.js (who can do what)
+  lib/                 prisma.js (transactions + retry), errors.js, audit.js, validators.js
+  middleware/          authenticate, authorize, validate, errorHandler
+  modules/<name>/      one folder per feature, always the same four layers:
+    <name>.routes.js      URL -> middleware -> controller
+    <name>.controller.js  HTTP in/out only
+    <name>.service.js     business rules and database transactions
+    <name>.schemas.js     zod request validation
+```
+
+Modules: `auth`, `users`, `locations`, `workshops`, `registrations` (plus `waitlist.js`), `audit`.
+To add an endpoint: schema -> service function -> controller function -> route line, then, if it needs
+a new rule about who may call it, one entry in `config/permissions.js`.
 
 ## The capacity rule: how it holds under concurrency
 
@@ -60,12 +98,12 @@ clear `503 SERVICE_BUSY` rather than a 500.
 
 Enforced on the backend by middleware, never just hidden in the UI.
 
-| Permission | Admin | Manager | Staff |
-|---|---|---|---|
-| Create user accounts & set roles (`USERS_MANAGE`) | yes | | |
-| Add & edit workshops (`WORKSHOPS_WRITE`) | | yes | |
-| Register & cancel attendees (`REGISTRATIONS_WRITE`) | | yes | yes |
-| View workshops, registrations & history (`WORKSHOPS_READ`) | | yes | yes |
+| Permission                                                 | Admin | Manager | Staff |
+| ---------------------------------------------------------- | ----- | ------- | ----- |
+| Create user accounts & set roles (`USERS_MANAGE`)          | yes   |         |       |
+| Add & edit workshops (`WORKSHOPS_WRITE`)                   |       | yes     |       |
+| Register & cancel attendees (`REGISTRATIONS_WRITE`)        |       | yes     | yes   |
+| View workshops, registrations & history (`WORKSHOPS_READ`) |       | yes     | yes   |
 
 The matrix lives in one file (`src/config/permissions.js`); routes ask for a permission, not a role.
 
@@ -81,22 +119,22 @@ The matrix lives in one file (`src/config/permissions.js`); routes ask for a per
 All routes are under `/api`. Success: `{ "data": ..., "meta": ... }`.
 Errors: `{ "error": { "code", "message", "details?" } }` with stable `code` values the frontend branches on.
 
-| Method | Path | Who | Notes |
-|---|---|---|---|
-| POST | `/auth/login` | public | returns `{ token, user }` |
-| GET | `/auth/me` | any | user + permission list |
-| GET, POST | `/users` | Admin | list / create |
-| PATCH | `/users/:id` | Admin | name, role, isActive |
-| POST | `/users/:id/reset-password` | Admin | |
-| GET | `/locations` | any signed in | |
-| GET | `/workshops` | Manager, Staff | filters below |
-| GET | `/workshops/:id` | Manager, Staff | |
-| POST, PATCH | `/workshops`, `/workshops/:id` | Manager | |
-| GET | `/workshops/:id/registrations` | Manager, Staff | full history incl. cancelled; `?status=` |
-| POST | `/workshops/:id/registrations` | Manager, Staff | `joinWaitlist: true` queues when full |
-| POST | `/registrations/:id/cancel` | Manager, Staff | optional `reason`; returns `{ registration, promoted[] }` |
-| GET | `/registrations?q=` | Manager, Staff | find an attendee's bookings across workshops |
-| GET | `/audit-logs` | Admin (account changes), Manager (workshop/registration changes) | |
+| Method      | Path                           | Who                                                              | Notes                                                     |
+| ----------- | ------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------- |
+| POST        | `/auth/login`                  | public                                                           | returns `{ token, user }`                                 |
+| GET         | `/auth/me`                     | any                                                              | user + permission list                                    |
+| GET, POST   | `/users`                       | Admin                                                            | list / create                                             |
+| PATCH       | `/users/:id`                   | Admin                                                            | name, role, isActive                                      |
+| POST        | `/users/:id/reset-password`    | Admin                                                            |                                                           |
+| GET         | `/locations`                   | any signed in                                                    |                                                           |
+| GET         | `/workshops`                   | Manager, Staff                                                   | filters below                                             |
+| GET         | `/workshops/:id`               | Manager, Staff                                                   |                                                           |
+| POST, PATCH | `/workshops`, `/workshops/:id` | Manager                                                          |                                                           |
+| GET         | `/workshops/:id/registrations` | Manager, Staff                                                   | full history incl. cancelled; `?status=`                  |
+| POST        | `/workshops/:id/registrations` | Manager, Staff                                                   | `joinWaitlist: true` queues when full                     |
+| POST        | `/registrations/:id/cancel`    | Manager, Staff                                                   | optional `reason`; returns `{ registration, promoted[] }` |
+| GET         | `/registrations?q=`            | Manager, Staff                                                   | find an attendee's bookings across workshops              |
+| GET         | `/audit-logs`                  | Admin (account changes), Manager (workshop/registration changes) |                                                           |
 
 **Finding workshops** (`GET /workshops`): `from`, `to` (date range), `status` (comma separated),
 `hasSeats=true` (open, upcoming, seats left), `locationId`, `q` (code/title/instructor), `page`, `pageSize`.

@@ -4,12 +4,7 @@ import { z } from 'zod';
 
 export const idParam = z.object({ id: z.coerce.number().int().positive() });
 
-export const email = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .email('Enter a valid email address')
-  .max(191);
+export const email = z.string().trim().toLowerCase().email('Enter a valid email address').max(191);
 
 export const personName = z.string().trim().min(1, 'Name is required').max(120);
 
