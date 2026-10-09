@@ -6,6 +6,8 @@ export const workshopIdParam = z.object({ workshopId: z.coerce.number().int().po
 export const createRegistrationBody = z.object({
   attendeeName: personName,
   attendeeEmail: email,
+  // If the workshop is full, queue the attendee instead of refusing.
+  joinWaitlist: z.boolean().default(false),
 });
 
 export const cancelRegistrationBody = z.object({

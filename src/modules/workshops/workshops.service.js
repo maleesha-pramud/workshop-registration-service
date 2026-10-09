@@ -4,11 +4,13 @@ import { ConflictError, NotFoundError, ValidationError } from '../../lib/errors.
 import { AuditEntity, diff, recordAudit } from '../../lib/audit.js';
 import { pageMeta } from '../../lib/validators.js';
 import { lockWorkshop } from './workshops.lock.js';
+import { fillFromWaitlist } from '../registrations/waitlist.js';
 
 const include = {
   location: { select: { id: true, name: true } },
   createdBy: { select: { id: true, name: true } },
   updatedBy: { select: { id: true, name: true } },
+  _count: { select: { registrations: { where: { status: 'WAITLISTED' } } } },
 };
 
 const EDITABLE_FIELDS = [
@@ -24,10 +26,11 @@ const EDITABLE_FIELDS = [
 ];
 
 /** Adds the derived fields the UI needs, so it never has to recompute business rules. */
-export function toWorkshopDto(w) {
+export function toWorkshopDto({ _count, ...w }) {
   const seatsLeft = Math.max(0, w.capacity - w.activeCount);
   return {
     ...w,
+    waitlistCount: _count?.registrations ?? 0,
     seatsLeft,
     isFull: seatsLeft === 0,
     isBookable: w.status === 'OPEN' && seatsLeft > 0 && new Date(w.startsAt) > new Date(),
@@ -137,7 +140,7 @@ export async function updateWorkshop(id, changes, actor) {
         );
       }
 
-      const updated = await tx.workshop.update({
+      let updated = await tx.workshop.update({
         where: { id },
         data: { ...changes, updatedById: actor.id },
         include,
@@ -152,6 +155,12 @@ export async function updateWorkshop(id, changes, actor) {
           entityId: id,
           changes: changed,
         });
+      }
+
+      // More seats, or reopened: hand any free seats to the waitlist, in order.
+      if (changed.capacity || changed.status) {
+        const promoted = await fillFromWaitlist(tx, id, actor);
+        if (promoted.length) updated = await tx.workshop.findUnique({ where: { id }, include });
       }
 
       return toWorkshopDto(updated);

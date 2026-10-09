@@ -3,6 +3,7 @@ import { ConflictError, NotFoundError } from '../../lib/errors.js';
 import { AuditEntity, recordAudit } from '../../lib/audit.js';
 import { pageMeta } from '../../lib/validators.js';
 import { lockWorkshop } from '../workshops/workshops.lock.js';
+import { fillFromWaitlist } from './waitlist.js';
 
 const include = {
   registeredBy: { select: { id: true, name: true } },
@@ -31,8 +32,11 @@ function assertAcceptingRegistrations(workshop) {
  *
  * The DB CHECK (active_count <= capacity) is the last line of defence: if this
  * logic were ever wrong, the increment would fail instead of overbooking.
+ *
+ * When the workshop is full and joinWaitlist is set, the attendee is queued
+ * instead (WAITLISTED rows don't hold a seat).
  */
-export async function register(workshopId, { attendeeName, attendeeEmail }, actor) {
+export async function register(workshopId, { attendeeName, attendeeEmail, joinWaitlist }, actor) {
   return withTransaction(async (tx) => {
     const workshop = await lockWorkshop(tx, workshopId);
     assertAcceptingRegistrations(workshop);
@@ -49,24 +53,34 @@ export async function register(workshopId, { attendeeName, attendeeEmail }, acto
       );
     }
 
-    if (workshop.activeCount >= workshop.capacity) {
+    const isFull = workshop.activeCount >= workshop.capacity;
+    if (isFull && !joinWaitlist) {
       throw new ConflictError('WORKSHOP_FULL', 'Sorry, this workshop is full', {
         capacity: workshop.capacity,
+        waitlistAvailable: true,
       });
     }
 
-    await tx.workshop.update({
-      where: { id: workshopId },
-      data: { activeCount: { increment: 1 } },
-    });
+    if (!isFull) {
+      await tx.workshop.update({
+        where: { id: workshopId },
+        data: { activeCount: { increment: 1 } },
+      });
+    }
     const registration = await tx.registration.create({
-      data: { workshopId, attendeeName, attendeeEmail, status: 'ACTIVE', registeredById: actor.id },
+      data: {
+        workshopId,
+        attendeeName,
+        attendeeEmail,
+        status: isFull ? 'WAITLISTED' : 'ACTIVE',
+        registeredById: actor.id,
+      },
       include,
     });
 
     await recordAudit(tx, {
       actorId: actor.id,
-      action: 'REGISTRATION_CREATED',
+      action: isFull ? 'REGISTRATION_WAITLISTED' : 'REGISTRATION_CREATED',
       entityType: AuditEntity.REGISTRATION,
       entityId: registration.id,
       changes: { workshopId, attendeeName, attendeeEmail, status: registration.status },
@@ -77,7 +91,8 @@ export async function register(workshopId, { attendeeName, attendeeEmail }, acto
 
 /**
  * Cancels a registration and frees its seat. The record is kept forever, with who
- * cancelled it and when.
+ * cancelled it and when. A freed seat goes straight to the next person on the
+ * waitlist, within the same locked transaction, so nobody can jump the queue.
  */
 export async function cancel(registrationId, { reason }, actor) {
   return withTransaction(async (tx) => {
@@ -124,7 +139,10 @@ export async function cancel(registrationId, { reason }, actor) {
       changes: { status: { from: registration.status, to: 'CANCELLED' }, reason: reason || null },
     });
 
-    return cancelled;
+    const promoted =
+      registration.status === 'ACTIVE' ? await fillFromWaitlist(tx, workshop.id, actor) : [];
+
+    return { registration: cancelled, promoted };
   });
 }
 
@@ -136,11 +154,17 @@ export async function listForWorkshop(workshopId, { status }) {
   });
   if (!workshop) throw new NotFoundError('Workshop');
 
-  return prisma.registration.findMany({
+  const registrations = await prisma.registration.findMany({
     where: { workshopId, ...(status && { status }) },
     include,
     orderBy: [{ registeredAt: 'asc' }, { id: 'asc' }],
   });
+
+  // Rows are ordered by registeredAt, which is exactly the waitlist order.
+  let position = 0;
+  return registrations.map((r) =>
+    r.status === 'WAITLISTED' ? { ...r, waitlistPosition: ++position } : r,
+  );
 }
 
 /** Search across all workshops, e.g. everything one attendee has booked or cancelled. */

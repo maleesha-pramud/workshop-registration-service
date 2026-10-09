@@ -11,6 +11,8 @@
  *   2. The same attendee is submitted 10 times at once on a fresh workshop -> exactly 1 succeeds.
  *   3. One registration is cancelled 10 times at once -> exactly 1 succeeds, seat freed once.
  *   4. After the cancel, REQUESTS attendees race for the single freed seat -> exactly 1 succeeds.
+ *   5. Waitlist: both seats of a 2-seat workshop are cancelled at once -> the first two
+ *      waitlisted attendees are promoted, in order, and the workshop is never overbooked.
  */
 
 const API = process.env.API_URL ?? 'http://localhost:4000/api';
@@ -121,6 +123,31 @@ async function main() {
   check('ACTIVE registration rows', active.length, CAPACITY);
   const history = (await call('GET', `/workshops/${w.id}/registrations`)).json.data;
   check('history keeps the cancelled row', history.filter((r) => r.status === 'CANCELLED').length, 1);
+
+  console.log('\n5) Waitlist: 2 seats, 2 booked + 5 waitlisted, both seats cancelled at once');
+  const w5 = await createWorkshop(2);
+  const booked = [await register(w5.id, 0, 'b'), await register(w5.id, 1, 'b')];
+  for (let i = 0; i < 5; i++) {
+    const r = await call('POST', `/workshops/${w5.id}/registrations`, {
+      attendeeName: `Waiter ${i}`,
+      attendeeEmail: `w${i}.${w5.id}@race.test`,
+      joinWaitlist: true,
+    });
+    if (r.json?.data?.status !== 'WAITLISTED') failures++;
+  }
+  const bothCancels = await Promise.all(
+    booked.map((b) => call('POST', `/registrations/${b.json.data.id}/cancel`, {})),
+  );
+  const promotedEmails = bothCancels.flatMap((r) => r.json.data.promoted.map((p) => p.attendeeEmail));
+  check('promoted from waitlist', promotedEmails.length, 2);
+  check(
+    'promoted in queue order',
+    promotedEmails.sort().join(','),
+    [`w0.${w5.id}@race.test`, `w1.${w5.id}@race.test`].join(','),
+  );
+  const w5after = (await call('GET', `/workshops/${w5.id}`)).json.data;
+  check('workshop.activeCount', w5after.activeCount, 2);
+  check('waitlist remaining', w5after.waitlistCount, 3);
 
   console.log(failures ? `\n${failures} check(s) FAILED\n` : '\nAll checks passed\n');
   process.exitCode = failures ? 1 : 0;
