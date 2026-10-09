@@ -8,6 +8,8 @@ import LoginPage from './pages/LoginPage'
 import ForbiddenPage from './pages/ForbiddenPage'
 import NotFoundPage from './pages/NotFoundPage'
 import UsersPage from './pages/UsersPage'
+import AttendeesPage from './pages/AttendeesPage'
+import ActivityPage from './pages/ActivityPage'
 import WorkshopsPage from './pages/WorkshopsPage'
 import WorkshopDetailPage from './pages/WorkshopDetailPage'
 import WorkshopFormPage from './pages/WorkshopFormPage'
@@ -33,10 +35,15 @@ export default function App() {
                 <Route element={<ProtectedRoute permission="WORKSHOPS_READ" />}>
                   <Route path="workshops" element={<WorkshopsPage />} />
                   <Route path="workshops/:id" element={<WorkshopDetailPage />} />
+                  <Route path="attendees" element={<AttendeesPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute permission="USERS_MANAGE" />}>
                   <Route path="users" element={<UsersPage />} />
+                </Route>
+
+                <Route element={<ProtectedRoute permission="AUDIT_READ" />}>
+                  <Route path="activity" element={<ActivityPage />} />
                 </Route>
                 <Route path="*" element={<NotFoundPage />} />
               </Route>

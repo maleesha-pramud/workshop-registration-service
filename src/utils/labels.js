@@ -49,6 +49,9 @@ const FIELD_LABELS = {
   endsAt: 'Ends',
   capacity: 'Capacity',
   status: 'Status',
+  attendeeName: 'Attendee',
+  attendeeEmail: 'Email',
+  reason: 'Reason',
 }
 
 export const fieldLabel = (f) => FIELD_LABELS[f] ?? f

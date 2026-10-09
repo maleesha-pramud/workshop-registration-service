@@ -15,7 +15,9 @@ export class ApiError extends Error {
   /** Maps API validation details ("body.email") to { email: message } for forms. */
   fieldErrors() {
     const out = {}
-    for (const d of this.details ?? []) {
+    // Only validation errors carry a list; other errors may attach an object.
+    if (!Array.isArray(this.details)) return out
+    for (const d of this.details) {
       const field = d.field?.split('.').slice(1).join('.') || d.field
       if (field && !out[field]) out[field] = d.message
     }
