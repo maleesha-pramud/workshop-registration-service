@@ -6,4 +6,4 @@ dist/
 .idea/
 # Word lock files
 ~$*
-config.bat
+.vscode/*

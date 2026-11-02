@@ -4,8 +4,8 @@
   "description": "Workshop Registration Service API",
   "main": "src/server.js",
   "scripts": {
-    "dev": "node init && nodemon src/server.js",
-    "start": "node init && node src/server.js",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
     "setup": "prisma migrate deploy && prisma db seed",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
@@ -43,9 +43,9 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "nodemon": "^1.14.10",
-    "oxlint": "^1.87.0",
-    "prettier": "^3.9.9",
+    "nodemon": "^3.1.14",
+    "oxlint": "^1.90.0",
+    "prettier": "^3.9.10",
     "prisma": "^6.12.0"
   },
   "allowScripts": {
